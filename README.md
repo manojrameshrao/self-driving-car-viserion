@@ -23,35 +23,35 @@ $ git clone https://gitlab.com/aakashmenon/Viserion.git
 
 Git Development Workflow:
 1. Create a new branch.
-```sh
+```
 	$ git checkout -b <branchname>
 ```
 2. Develop code as required
 and stage files
 To stage all files
-```sh
+```
 	$ git add -A
 ```
 OR
 To stage particular files
-```sh
+```
 	$ git add <filename1> <filename2>
 ```
 3. Commit the changes to the local repository.
-```sh
+```
 	$ git commit -m "add comments"
 ```
 4. Push the branch to remote repository.
-```sh
+```
 	$ git push origin head
 ```
 5. **Switch to master and update it to the latest version.**
-```sh
+```
 	$ git checkout master
 	$ git pull origin master
 ```
 6. Now merge and push the branch.
-```sh
+```
 	$ git merge <branchname>
 	$ git push origin master
 ```
