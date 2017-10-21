@@ -32,23 +32,19 @@ NS_ :
 
 BS_:
 
-BU_: DBG MASTER GEO MOTOR SENSORS BT
+BU_: DBG MASTER MOTOR SENSORS GEO BT
 
-CM_ BU_ DRIVER "The driver controller driving the car";
-CM_ BU_ MOTOR "The motor controller of the car";
-CM_ BU_ SENSOR "The sensor controller of the car";
-CM_ BO_ 100 "Sync message used to synchronize the controllers";
+BO_ 95 HB_SENSORS: 1 SENSORS
+ SG_ SENSOR_ALIVE : 0|1@1+ (1,0) [0|0] "HB-S" MASTER,MOTOR,GEO,BT
 
-BA_DEF_ "BusType" STRING ;
-BA_DEF_ BO_ "GenMsgCycleTime" INT 0 0;
-BA_DEF_ SG_ "FieldType" STRING ;
+BO_ 96 HB_MOTORS: 1 MOTOR
+ SG_ MOTOR_ALIVE : 0|1@1+ (1,0) [0|0] "HB-M" MASTER,SENSORS,GEO,BT
 
-BA_DEF_DEF_ "BusType" "CAN";
-BA_DEF_DEF_ "FieldType" "";
-BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BO_ 97 HB_GEO: 1 GEO
+ SG_ GEO_ALIVE : 0|1@1+ (1,0) [0|0] "HB-G" MASTER,SENSORS,MOTOR,BT
 
-BA_ "GenMsgCycleTime" BO_ 500 100;
-BA_ "GenMsgCycleTime" BO_ 100 1000;
-BA_ "GenMsgCycleTime" BO_ 101 100;
-BA_ "GenMsgCycleTime" BO_ 400 100;
-BA_ "GenMsgCycleTime" BO_ 200 100;
+BO_ 98 HB_BT: 1 BT
+ SG_ BT_ALIVE : 0|1@1+ (1,0) [0|0] "HB-BT" MASTER,SENSORS,MOTOR,GEO
+
+BO_ 99 HB_MASTER: 1 MASTER
+ SG_ MASTER_ALIVE : 0|1@1+ (1,0) [0|0] "HB-MT" BT,SENSORS,MOTOR,GEO
