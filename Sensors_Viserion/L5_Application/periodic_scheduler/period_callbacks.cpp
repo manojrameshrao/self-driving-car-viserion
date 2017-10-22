@@ -31,6 +31,12 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+#include "can.h"
+
+#include "_can_dbc/generated_Viserion.h"
+#include "dbc_app_send_can_msg.h"
+#include "send_sensor_hartbeat.h"
+#include "receive_hartbeats.h"
 
 
 
@@ -48,6 +54,15 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    CAN_init(can1, 100, 5, 5, NULL, NULL);
+    CAN_reset_bus(can1);
+    CAN_bypass_filter_accept_all_msgs();
+
+//    motor_msg.mia_info.mia_counter_ms = 0;
+//    geo_msg.mia_info.mia_counter_ms = 0;
+//    bt_msg.mia_info.mia_counter_ms = 0;
+//    master_msg.mia_info.mia_counter_ms = 0;
+
     return true; // Must return true upon success
 }
 
@@ -66,17 +81,20 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    LE.toggle(1);
+    if(CAN_is_bus_off(can1))
+        CAN_reset_bus(can1);
+
+    send_sensor_hartbeat();
 }
 
 void period_10Hz(uint32_t count)
 {
-    LE.toggle(2);
+    receive_hartbeats();
 }
 
 void period_100Hz(uint32_t count)
 {
-    LE.toggle(3);
+    //LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
