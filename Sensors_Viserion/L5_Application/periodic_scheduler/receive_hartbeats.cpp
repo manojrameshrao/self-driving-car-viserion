@@ -64,15 +64,19 @@ void receive_hartbeats(void){
         }
     }
 
-    // Service the MIA counter of a regular (non MUX'd) message
+    /**
+     *  Service the MIA counter of a regular (non MUX'd) message
+     * Instead of using LD.setNumber(1); we should use LD.setNumber(master_msg.MOTOR_ALIVE); and so on
+     * but in order to do that we need to change our DBC signals to be 1 byte not 1 bit
+    */
     if(dbc_handle_mia_HB_MOTORS(&motor_msg, 100))
-        LD.setNumber(motor_msg.MOTOR_ALIVE);
-    else if(dbc_handle_mia_HB_GEO(&geo_msg, 100))
-        LD.setNumber(geo_msg.GEO_ALIVE);
-    else if(dbc_handle_mia_HB_BT(&bt_msg, 100))
-        LD.setNumber(bt_msg.BT_ALIVE);
-    else if(dbc_handle_mia_HB_MASTER(&master_msg, 100))
-        LD.setNumber(master_msg.MASTER_ALIVE);
+        LD.setNumber(1);
+    if(dbc_handle_mia_HB_GEO(&geo_msg, 100))
+        LD.setNumber(2);
+    if(dbc_handle_mia_HB_BT(&bt_msg, 100))
+        LD.setNumber(3);
+    if(dbc_handle_mia_HB_MASTER(&master_msg, 100))
+        LD.setNumber(4);
 }
 
 
