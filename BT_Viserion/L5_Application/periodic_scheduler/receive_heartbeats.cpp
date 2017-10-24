@@ -35,7 +35,7 @@ HB_MASTER_t master_msg = { 0 };
 
 void receive_heartbeats(void){
 
-	LE.setAll(0x00);
+	//LE.setAll(0x00);
 	can_msg_t can_msg;
 
 	// Empty all of the queued, and received messages within the last 10ms (100Hz callback frequency)
