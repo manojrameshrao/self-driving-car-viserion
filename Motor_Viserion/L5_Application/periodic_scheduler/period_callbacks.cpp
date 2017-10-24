@@ -28,16 +28,18 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "can.h"
 #include <stdio.h>
 #include "_can_dbc/generated_Viserion.h"
+#include <string.h>
 
-const uint32_t                             HB_SENSORS__MIA_MS = 3000;
-const HB_SENSORS_t                         HB_SENSORS__MIA_MSG = {0};
-HB_SENSORS_t sensor_msg={0};
+#include "dbc_app_send_can_msg.h"
+#include "send_motor_heartbeat.h"
+#include "receive_heartbeats.h"
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -71,8 +73,6 @@ bool period_init(void)
     return true; // Must return true upon success
 }
 
-
-
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
@@ -80,64 +80,28 @@ bool period_reg_tlm(void)
     return true; // Must return true upon success
 }
 
-
 /**
  * Below are your periodic functions.
  * The argument 'count' is the number of times each periodic task is called.
  */
 
-bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
-{
-    can_msg_t can_msg = { 0 };
-    can_msg.msg_id                = mid;
-    can_msg.frame_fields.data_len = dlc;
-    memcpy(can_msg.data.bytes, bytes, dlc);
-
-    return CAN_tx(can1, &can_msg, 0);
-}
-
-void motor_hb()
-{
-	HB_MOTORS_t motor_msg={1};
-	motor_msg.MOTOR_ALIVE=1;
-	dbc_encode_and_send_HB_MOTORS(&motor_msg);
-}
-
-
-
 void period_1Hz(uint32_t count)
 {
 	if(CAN_is_bus_off(can1))
-	{
-	    LE.toggle(2);
 	    CAN_reset_bus(can1);
-	}
-    LE.toggle(1);
-    motor_hb();
+
+    send_motor_heartbeat();
 }
 
 void period_10Hz(uint32_t count)
 {
+	receive_heartbeats();
    // LE.toggle(2);
 }
 
 void period_100Hz(uint32_t count)
 {
-	can_msg_t msg;
-
-	while(CAN_rx(can1,&msg,0))
-	{
-		dbc_msg_hdr_t can_msg_hdr;
-	    can_msg_hdr.dlc = can_msg.frame_fields.data_len;
-		can_msg_hdr.mid = can_msg.msg_id;
-
-		if(can_msg_hdr.mid==95)
-		{
-			LE.toggle(3);
-		}
-	}
-
-   // LE.toggle(3);
+	// LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
@@ -146,7 +110,3 @@ void period_1000Hz(uint32_t count)
 {
     //LE.toggle(4);
 }
-
-if(dbc_handle_mia_HB_SENSORS(&sensor_msg, 100))
-        LD.setNumber(1);
-
