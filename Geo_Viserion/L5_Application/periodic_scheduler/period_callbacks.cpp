@@ -31,8 +31,9 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-
-
+#include "can.h"
+#include "periodic_scheduler/geoHBtx.h"
+#include "periodic_scheduler/geoHBrx.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -48,6 +49,9 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    CAN_init(can1, 100, 10, 10, NULL, NULL);
+    CAN_bypass_filter_accept_all_msgs();
+    CAN_reset_bus(can1);
     return true; // Must return true upon success
 }
 
@@ -66,17 +70,24 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    LE.toggle(1);
+    //LE.toggle(1);
+    if(CAN_is_bus_off(can1))
+    {
+      //printf("Can bus is off\n");
+            CAN_reset_bus(can1);
+    }
+    geo_heartbeat();
 }
 
 void period_10Hz(uint32_t count)
 {
-    LE.toggle(2);
+   // LE.toggle(2);
+   receive_heartbeats();
 }
 
 void period_100Hz(uint32_t count)
 {
-    LE.toggle(3);
+    //LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
