@@ -2,6 +2,7 @@
 #include "_can_dbc/generated_Viserion.h"
 #include "io.hpp"
 #include "can.h"
+#include <stdio.h>
 
 
 const uint32_t                             HB_BT__MIA_MS = 3000;
@@ -40,19 +41,23 @@ void receive_heartbeats(void)
 			switch(can_msg.msg_id)
 			        {
 			            case 95:dbc_decode_HB_SENSORS(&sensor_msg, can_msg.data.bytes, &can_msg_hdr);
-						    LE.on(3);
+						    LE.on(1);
+						    printf("Sensor_HB");
 						    break;
 			            case 97:
 			                dbc_decode_HB_GEO(&geo_msg, can_msg.data.bytes, &can_msg_hdr);
 			                LE.on(2);
+			                printf("Geo_HB");
 			                break;
 			            case 98:
 			                dbc_decode_HB_BT(&bt_msg, can_msg.data.bytes, &can_msg_hdr);
 			                LE.on(3);
+			                printf("BT_HB");
 			                break;
 			            case 99:
 			                dbc_decode_HB_MASTER(&master_msg, can_msg.data.bytes, &can_msg_hdr);
 			                LE.on(4);
+			                printf("Master_HB");
 			                break;
 			        }
 		}
