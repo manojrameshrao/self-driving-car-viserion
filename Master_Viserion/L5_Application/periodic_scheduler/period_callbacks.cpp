@@ -28,12 +28,16 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+#include <Periodic_Hearbeats/receive_heartbeats.h>
+#include <Periodic_Hearbeats/send_heartbeats.h>
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+#include "can.h"
+#include "io.hpp"
 
 
-
+const can_t canbusno = can1;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -48,6 +52,10 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    CAN_init(canbusno,100,10,10,NULL,NULL);
+    CAN_reset_bus(canbusno);
+    CAN_bypass_filter_accept_all_msgs();
+
     return true; // Must return true upon success
 }
 
@@ -66,22 +74,38 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    LE.toggle(1);
+    if(CAN_is_bus_off(canbusno))
+    {
+        CAN_reset_bus(canbusno);
+    }
+    send_heartbeat(canbusno);
+/*
+    if(send_heartbeat(canbusno))
+    {
+       // LD.setNumber(11);
+    }
+    else
+    {
+        //LD.setNumber(0);
+    }
+   // LE.toggle(1);
+*/
 }
 
 void period_10Hz(uint32_t count)
 {
-    LE.toggle(2);
+    receive_heartbeats(canbusno,100);
+   // LE.toggle(2);
 }
 
 void period_100Hz(uint32_t count)
 {
-    LE.toggle(3);
+   // LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    LE.toggle(4);
+   // LE.toggle(4);
 }
