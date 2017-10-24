@@ -15,13 +15,13 @@
 
 
 
-const uint32_t                             HB_SENSORS__MIA_MS= 3000;
+const uint32_t                             HB_SENSORS__MIA_MS= 10000;
 const HB_SENSORS_t                         HB_SENSORS__MIA_MSG={0};
-const uint32_t                             HB_MOTORS__MIA_MS= 3000;
+const uint32_t                             HB_MOTORS__MIA_MS= 10000;
 const HB_MOTORS_t                          HB_MOTORS__MIA_MSG={0};
-const uint32_t                             HB_GEO__MIA_MS= 3000;
+const uint32_t                             HB_GEO__MIA_MS= 10000;
 const HB_GEO_t                             HB_GEO__MIA_MSG={0};
-const uint32_t                             HB_MASTER__MIA_MS= 3000;
+const uint32_t                             HB_MASTER__MIA_MS= 10000;
 const HB_MASTER_t                          HB_MASTER__MIA_MSG={0};
 
 
@@ -34,12 +34,8 @@ HB_MASTER_t master_msg = { 0 };
 
 
 void receive_heartbeats(void){
-	/* Turn all LEDs off every 100ms just to be able to see when they are turning on */
-	LE.off(1);
-	LE.off(2);
-	LE.off(3);
-	LE.off(4);
 
+	LE.setAll(0x00);
 	can_msg_t can_msg;
 
 	// Empty all of the queued, and received messages within the last 10ms (100Hz callback frequency)
@@ -55,23 +51,23 @@ void receive_heartbeats(void){
 		case 95:
 			dbc_decode_HB_SENSORS(&sensors_msg, can_msg.data.bytes, &can_msg_hdr);
 			LD.setNumber(11);
-            LE.on(1);
+			LE.on(1);
 			break;
 
 		case 96:
 			dbc_decode_HB_MOTORS(&motor_msg, can_msg.data.bytes, &can_msg_hdr);
 			LD.setNumber(22);
-	        LE.on(2);
+			LE.on(2);
 			break;
 		case 97:
 			dbc_decode_HB_GEO(&geo_msg, can_msg.data.bytes, &can_msg_hdr);
 			LD.setNumber(33);
-            LE.on(3);
+			LE.on(3);
 			break;
 		case 99:
 			dbc_decode_HB_MASTER(&master_msg, can_msg.data.bytes, &can_msg_hdr);
 			LD.setNumber(55);
-            LE.on(4);
+			LE.on(4);
 			break;
 		}
 	}
@@ -82,13 +78,25 @@ void receive_heartbeats(void){
 	 * but in order to do that we need to change our DBC signals to be 1 byte not 1 bit
 	 */
 	if(dbc_handle_mia_HB_SENSORS(&sensors_msg, 100))
+	{
 		LD.setNumber(10);
+		LE.off(1);
+	}
 	if(dbc_handle_mia_HB_MOTORS(&motor_msg, 100))
+	{
 		LD.setNumber(20);
+		LE.off(2);
+	}
 	if(dbc_handle_mia_HB_GEO(&geo_msg, 100))
+	{
 		LD.setNumber(30);
+		LE.off(3);
+	}
 	if(dbc_handle_mia_HB_MASTER(&master_msg, 100))
+	{
 		LD.setNumber(50);
+		LE.off(4);
+	}
 }
 
 
