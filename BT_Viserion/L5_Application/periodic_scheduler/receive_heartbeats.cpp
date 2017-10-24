@@ -54,20 +54,24 @@ void receive_heartbeats(void){
 		{
 		case 95:
 			dbc_decode_HB_SENSORS(&sensors_msg, can_msg.data.bytes, &can_msg_hdr);
-			LE.on(3);
+			LD.setNumber(11);
+            LE.on(1);
 			break;
 
 		case 96:
 			dbc_decode_HB_MOTORS(&motor_msg, can_msg.data.bytes, &can_msg_hdr);
-			LE.on(1);
+			LD.setNumber(22);
+	        LE.on(2);
 			break;
 		case 97:
 			dbc_decode_HB_GEO(&geo_msg, can_msg.data.bytes, &can_msg_hdr);
-			LE.on(2);
+			LD.setNumber(33);
+            LE.on(3);
 			break;
 		case 99:
 			dbc_decode_HB_MASTER(&master_msg, can_msg.data.bytes, &can_msg_hdr);
-			LE.on(4);
+			LD.setNumber(55);
+            LE.on(4);
 			break;
 		}
 	}
@@ -78,13 +82,13 @@ void receive_heartbeats(void){
 	 * but in order to do that we need to change our DBC signals to be 1 byte not 1 bit
 	 */
 	if(dbc_handle_mia_HB_SENSORS(&sensors_msg, 100))
-			LD.setNumber(1);
+		LD.setNumber(10);
 	if(dbc_handle_mia_HB_MOTORS(&motor_msg, 100))
-		LD.setNumber(2);
+		LD.setNumber(20);
 	if(dbc_handle_mia_HB_GEO(&geo_msg, 100))
-		LD.setNumber(3);
+		LD.setNumber(30);
 	if(dbc_handle_mia_HB_MASTER(&master_msg, 100))
-		LD.setNumber(4);
+		LD.setNumber(50);
 }
 
 
