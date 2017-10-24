@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.tracecompass.tmf"
+      label="%featureName"
+      version="1.1.0.201509141028"
+      provider-name="%featureProvider">
+
+   <description>
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <license url="%licenseURL">
+      %license
+   </license>
+
+   <requires>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.ui.views"/>
+      <import plugin="org.eclipse.core.expressions"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.eclipse.ui.navigator"/>
+      <import plugin="org.eclipse.ui.navigator.resources"/>
+      <import plugin="org.eclipse.emf.common" version="2.5.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.emf.ecore" version="2.5.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="org.eclipse.tracecompass.tmf.core"
+         download-size="493"
+         install-size="1040"
+         version="1.1.0.201509141028"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tracecompass.tmf.ui"
+         download-size="1983"
+         install-size="4375"
+         version="1.1.0.201509141028"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tracecompass.doc.dev"
+         download-size="2780"
+         install-size="3326"
+         version="1.0.0.201509141028"/>
+
+   <plugin
+         id="org.eclipse.tracecompass.tmf.analysis.xml.core"
+         download-size="88"
+         install-size="208"
+         version="1.0.0.201509141028"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tracecompass.tmf.analysis.xml.ui"
+         download-size="72"
+         install-size="144"
+         version="1.0.0.201509141028"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tracecompass.statesystem.core"
+         download-size="93"
+         install-size="186"
+         version="1.0.0.201509141028"
+         unpack="false"/>
+
+</feature>

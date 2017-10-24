@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<registration_data version="1.0">
+   <environment>
+      <hostname>svr-cas-cs-01</hostname>
+      <hostId/>
+      <osName>Windows Server 2008 R2</osName>
+      <osVersion>6.1</osVersion>
+      <osArchitecture>x86</osArchitecture>
+      <systemModel>VMware Virtual Platform</systemModel>
+      <systemManufacturer>VMware, Inc.</systemManufacturer>
+      <cpuManufacturer>AuthenticAMD</cpuManufacturer>
+      <serialNumber>VMware-42 34 f3 e8 2c 19 0a e2-87 23 d0 fa 42 71 b4 a4</serialNumber>
+   </environment>
+   <registry urn="urn:st:3c4abd7d-577b-46c6-b650-99ed17013878" version="1.0">
+      <service_tag>
+         <instance_urn>urn:st:fa793b7b-c6bf-4228-a38f-1e2f32a7a9dc</instance_urn>
+         <product_name>Java SE 7 Runtime Environment</product_name>
+         <product_version>1.7.0_07</product_version>
+         <product_urn>JSERE-007-ZZZZ</product_urn>
+         <product_parent_urn>urn:uuid:dc1704fe-264f-11dc-9482-080020a9ed93</product_parent_urn>
+         <product_parent>Java Platform Standard Edition 7 (Java SE 7)</product_parent>
+         <product_defined_inst_id>id=1.7.0_07-b10 x86,dir=C:\Users\wrighton\Downloads\jvm</product_defined_inst_id>
+         <product_vendor>Oracle Corporation</product_vendor>
+         <platform_arch>x86</platform_arch>
+         <timestamp>2012-09-07 20:59:47 GMT</timestamp>
+         <container>global</container>
+         <source>Windows JRE installer</source>
+         <installer_uid>-1</installer_uid>
+      </service_tag>
+   </registry>
+</registration_data>

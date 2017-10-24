@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<package id="manifest-0-038-2ed4-aa2fc1">
+    <release tarname="binutils-2.23.2-1-mingw32-bin.tar.lzma" />
+    <references>
+        <sysroot id="sysroot-0-002-a7c6-d7dbb5" />
+    </references>
+    <manifest>
+        <dir path="bin" />
+        <file path="bin/addr2line.exe" />
+        <file path="bin/ar.exe" />
+        <file path="bin/as.exe" />
+        <file path="bin/c++filt.exe" />
+        <file path="bin/dlltool.exe" />
+        <file path="bin/dllwrap.exe" />
+        <file path="bin/elfedit.exe" />
+        <file path="bin/gprof.exe" />
+        <file path="bin/ld.bfd.exe" />
+        <file path="bin/ld.exe" />
+        <file path="bin/mingw32-addr2line.exe" />
+        <file path="bin/mingw32-ar.exe" />
+        <file path="bin/mingw32-as.exe" />
+        <file path="bin/mingw32-c++filt.exe" />
+        <file path="bin/mingw32-dlltool.exe" />
+        <file path="bin/mingw32-dllwrap.exe" />
+        <file path="bin/mingw32-elfedit.exe" />
+        <file path="bin/mingw32-gprof.exe" />
+        <file path="bin/mingw32-ld.bfd.exe" />
+        <file path="bin/mingw32-ld.exe" />
+        <file path="bin/mingw32-nm.exe" />
+        <file path="bin/mingw32-objcopy.exe" />
+        <file path="bin/mingw32-objdump.exe" />
+        <file path="bin/mingw32-ranlib.exe" />
+        <file path="bin/mingw32-readelf.exe" />
+        <file path="bin/mingw32-size.exe" />
+        <file path="bin/mingw32-strings.exe" />
+        <file path="bin/mingw32-strip.exe" />
+        <file path="bin/mingw32-windmc.exe" />
+        <file path="bin/mingw32-windres.exe" />
+        <file path="bin/nm.exe" />
+        <file path="bin/objcopy.exe" />
+        <file path="bin/objdump.exe" />
+        <file path="bin/ranlib.exe" />
+        <file path="bin/readelf.exe" />
+        <file path="bin/size.exe" />
+        <file path="bin/strings.exe" />
+        <file path="bin/strip.exe" />
+        <file path="bin/windmc.exe" />
+        <file path="bin/windres.exe" />
+        <dir path="mingw32" />
+        <dir path="mingw32/bin" />
+        <file path="mingw32/bin/ar.exe" />
+        <file path="mingw32/bin/as.exe" />
+        <file path="mingw32/bin/dlltool.exe" />
+        <file path="mingw32/bin/ld.bfd.exe" />
+        <file path="mingw32/bin/ld.exe" />
+        <file path="mingw32/bin/nm.exe" />
+        <file path="mingw32/bin/objcopy.exe" />
+        <file path="mingw32/bin/objdump.exe" />
+        <file path="mingw32/bin/ranlib.exe" />
+        <file path="mingw32/bin/strip.exe" />
+    </manifest>
+</package>

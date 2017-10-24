@@ -1,0 +1,37 @@
+
+make
+=====
+
+The make program is the original version which was taken from 
+"mingw32-make-3.81-1", you can find the package here:
+
+http://prdownloads.sourceforge.net/mingw/mingw32-make-3.81-1.tar.gz
+
+Also the source can be found here:
+
+http://prdownloads.sourceforge.net/mingw/mingw32-make-3.81-1-src.tar.gz
+
+
+
+sh, msys-1.0, echo, touch, and some of the fileutils
+=====================================================
+
+The tools are original version which was taken from "msys-1.0.8.exe".
+You can find the "msys-1.0.8" package here:
+
+http://prdownloads.sourceforge.net/mingw/MSYS-1.0.8.exe
+
+
+And the source here:
+
+http://prdownloads.sourceforge.net/mingw/msys-1.0.8-src.tar.bz2
+
+
+
+uname, libintl3.dll and libiconv2.dll are parts of the coreutils
+=================================================================
+
+The tools are original version which was taken form coreutils 5.3.0.
+You can find the full package here:
+
+http://gnuwin32.sourceforge.net/packages/coreutils.htm

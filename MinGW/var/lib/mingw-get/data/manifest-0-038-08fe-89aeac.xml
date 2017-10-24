@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<package id="manifest-0-038-08fe-89aeac">
+    <release tarname="binutils-2.23.2-1-mingw32-dev.tar.lzma" />
+    <references>
+        <sysroot id="sysroot-0-002-a7c6-d7dbb5" />
+    </references>
+    <manifest>
+        <dir path="include" />
+        <file path="include/ansidecl.h" />
+        <file path="include/bfd.h" />
+        <file path="include/bfdlink.h" />
+        <file path="include/dis-asm.h" />
+        <file path="include/plugin-api.h" />
+        <file path="include/symcat.h" />
+        <dir path="lib" />
+        <file path="lib/libbfd.a" />
+        <file path="lib/libdl.a" />
+        <file path="lib/libiberty.a" />
+        <file path="lib/libopcodes.a" />
+        <dir path="mingw32" />
+        <dir path="mingw32/include" />
+        <file path="mingw32/include/ansidecl.h" />
+        <file path="mingw32/include/bfd.h" />
+        <file path="mingw32/include/bfdlink.h" />
+        <file path="mingw32/include/dis-asm.h" />
+        <file path="mingw32/include/plugin-api.h" />
+        <file path="mingw32/include/symcat.h" />
+        <dir path="mingw32/lib" />
+        <dir path="mingw32/lib/ldscripts" />
+        <file path="mingw32/lib/ldscripts/i386pe.x" />
+        <file path="mingw32/lib/ldscripts/i386pe.xa" />
+        <file path="mingw32/lib/ldscripts/i386pe.xbn" />
+        <file path="mingw32/lib/ldscripts/i386pe.xn" />
+        <file path="mingw32/lib/ldscripts/i386pe.xr" />
+        <file path="mingw32/lib/ldscripts/i386pe.xu" />
+        <file path="mingw32/lib/libbfd.a" />
+        <file path="mingw32/lib/libdl.a" />
+        <file path="mingw32/lib/libiberty.a" />
+        <file path="mingw32/lib/libopcodes.a" />
+    </manifest>
+</package>

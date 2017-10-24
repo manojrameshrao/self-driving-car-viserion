@@ -32,6 +32,13 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 
+#include "can.h"
+
+#include "_can_dbc/generated_Viserion.h"
+#include "dbc_app_send_can_msg.h"
+#include "send_bluetooth_heartbeat.h"
+#include "receive_heartbeats.h"
+
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -48,14 +55,17 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    return true; // Must return true upon success
+	CAN_init(can1, 100, 5, 5, NULL, NULL);
+	CAN_reset_bus(can1);
+	CAN_bypass_filter_accept_all_msgs();
+	return true; // Must return true upon success
 }
 
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
-    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
-    return true; // Must return true upon success
+	// Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+	return true; // Must return true upon success
 }
 
 
@@ -66,22 +76,27 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    LE.toggle(1);
+	if(CAN_is_bus_off(can1))
+	        CAN_reset_bus(can1);
+
+	send_bluetooth_hartbeat();
+
 }
 
 void period_10Hz(uint32_t count)
 {
-    LE.toggle(2);
+	receive_heartbeats();
+
 }
 
 void period_100Hz(uint32_t count)
 {
-    LE.toggle(3);
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    LE.toggle(4);
+
 }
