@@ -27,7 +27,7 @@ HB_MASTER_t master_msg = {0};
 
 void receive_heartbeats(void)
 {
-    LE.setAll(0x00);
+    //LE.setAll(0x00);
     can_msg_t can_msg;
     if(CAN_rx(can1, &can_msg, 0))
     {
@@ -68,18 +68,22 @@ void receive_heartbeats(void)
     if(dbc_handle_mia_HB_SENSORS(&sensor_msg, 100))
     {
        LD.setNumber(10);
+       LE.off(1);
     }
     if(dbc_handle_mia_HB_MOTORS(&motors_msg, 100))
     {
         LD.setNumber(20);
+        LE.off(2);
     }
     if(dbc_handle_mia_HB_BT(&bt_msg, 100))
     {
         LD.setNumber(40);
+        LE.off(3);
     }
     if(dbc_handle_mia_HB_MASTER(&master_msg, 100))
     {
         LD.setNumber(50);
+        LE.off(4);
     }
 
 }
