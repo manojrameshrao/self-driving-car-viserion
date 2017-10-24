@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Delete 5 resources" deleteContents="false" description="Delete 5 resources" element1="/Bluetooth_Viserion" element2="/Geographical_Viserion" element3="/Master_Viserion" element4="/Motor_Viserion" element5="/Sensors_Viserion" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="5" stamp="1508805997112"/>
-</session>
