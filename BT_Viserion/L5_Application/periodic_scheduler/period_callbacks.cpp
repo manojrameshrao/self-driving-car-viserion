@@ -77,8 +77,9 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 	if(CAN_is_bus_off(can1))
-	        CAN_reset_bus(can1);
-
+	{
+	    CAN_reset_bus(can1);
+	}
 	send_bluetooth_hartbeat();
 
 }
