@@ -32,6 +32,46 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 
+#include "gpio.hpp"
+#include "utilities.h"  // delay_us()
+#include "eint.h"
+#include "stdio.h"
+#include "file_logger.h"
+#include <inttypes.h>
+
+//#define TRASHOLD    10
+
+
+
+GPIO leftSensorTrigger(P2_6);
+GPIO rightSensorTrigger(P2_7);
+
+
+int LEFT_START, LEFT_STOP, LEFT_DISTANCE = 0;
+int RIGHT_START, RIGHT_STOP, RIGHT_DISTANCE = 0;
+
+
+void leftSensorStartISR(void){
+    LEFT_START = sys_get_uptime_us();
+    LE.on(1);
+}
+
+void leftSensorStopISR(void){
+    LEFT_STOP = sys_get_uptime_us();
+    LEFT_DISTANCE = (LEFT_STOP - LEFT_START) / 147;
+    LE.off(1);
+}
+
+void rightSensorStartISR(void){
+    RIGHT_START = sys_get_uptime_us();
+    LE.on(2);
+}
+
+void rightSensorStopISR(void){
+    RIGHT_STOP = sys_get_uptime_us();
+    RIGHT_DISTANCE = (RIGHT_STOP - RIGHT_START) / 147;
+    LE.off(2);
+}
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -48,6 +88,20 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    leftSensorTrigger.setAsOutput();
+    leftSensorTrigger.setLow();
+
+    rightSensorTrigger.setAsOutput();
+    rightSensorTrigger.setLow();
+
+    uint8_t Pin_2_0 = 0;
+    eint3_enable_port2(Pin_2_0, eint_rising_edge, leftSensorStartISR);
+    eint3_enable_port2(Pin_2_0, eint_falling_edge, leftSensorStopISR);
+
+    uint8_t Pin_2_1 = 1;
+    eint3_enable_port2(Pin_2_1, eint_rising_edge, rightSensorStartISR);
+    eint3_enable_port2(Pin_2_1, eint_falling_edge, rightSensorStopISR);
+
     return true; // Must return true upon success
 }
 
@@ -66,17 +120,27 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    LE.toggle(1);
+//    LOG_INFO("left: %d, right: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE);
+//    printf("left: %d, right: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE);
 }
 
 void period_10Hz(uint32_t count)
 {
-    LE.toggle(2);
+    printf("________________________________________\n");
+//    LE.toggle(2);
 }
 
 void period_100Hz(uint32_t count)
 {
-    LE.toggle(3);
+    leftSensorTrigger.setLow();
+    rightSensorTrigger.setLow();
+
+//    if(count % 5 == 0){
+        leftSensorTrigger.setHigh();
+        rightSensorTrigger.setHigh();
+        delay_us(20);
+//    }
+    printf("left: %d, right: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
