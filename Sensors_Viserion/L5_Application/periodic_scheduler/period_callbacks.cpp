@@ -36,43 +36,62 @@
 #include "utilities.h"  // delay_us()
 #include "eint.h"
 #include "stdio.h"
-#include "file_logger.h"
-#include <inttypes.h>
-
-//#define TRASHOLD    10
 
 
 
 GPIO leftSensorTrigger(P2_6);
 GPIO rightSensorTrigger(P2_7);
+GPIO middleSensorTrigger(P2_7);
 
 
-int LEFT_START, LEFT_STOP, LEFT_DISTANCE = 0;
-int RIGHT_START, RIGHT_STOP, RIGHT_DISTANCE = 0;
+
+int START, STOP, LEFT_DISTANCE, RIGHT_DISTANCE, MIDDLE_DISTANCE = 0;
+
+
+enum sensor_t {
+    left,
+    right,
+    middle,
+    wait
+};
+sensor_t sensor = left;
 
 
 void leftSensorStartISR(void){
-    LEFT_START = sys_get_uptime_us();
+    START = sys_get_uptime_us();
     LE.on(1);
 }
 
 void leftSensorStopISR(void){
-    LEFT_STOP = sys_get_uptime_us();
-    LEFT_DISTANCE = (LEFT_STOP - LEFT_START) / 147;
+    STOP = sys_get_uptime_us();
+    LEFT_DISTANCE = (STOP - START) / 147;
+    sensor = right;
     LE.off(1);
 }
 
 void rightSensorStartISR(void){
-    RIGHT_START = sys_get_uptime_us();
+    START = sys_get_uptime_us();
     LE.on(2);
 }
 
 void rightSensorStopISR(void){
-    RIGHT_STOP = sys_get_uptime_us();
-    RIGHT_DISTANCE = (RIGHT_STOP - RIGHT_START) / 147;
+    STOP = sys_get_uptime_us();
+    RIGHT_DISTANCE = (STOP - START) / 147;
+    sensor = middle;
     LE.off(2);
 }
 
+void middleSensorStartISR(void){
+    START = sys_get_uptime_us();
+    LE.on(3);
+}
+
+void middleSensorStopISR(void){
+    STOP = sys_get_uptime_us();
+    MIDDLE_DISTANCE = (STOP - START) / 147;
+    sensor = left;
+    LE.off(3);
+}
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -94,6 +113,9 @@ bool period_init(void)
     rightSensorTrigger.setAsOutput();
     rightSensorTrigger.setLow();
 
+    middleSensorTrigger.setAsOutput();
+    middleSensorTrigger.setLow();
+
     uint8_t Pin_2_0 = 0;
     eint3_enable_port2(Pin_2_0, eint_rising_edge, leftSensorStartISR);
     eint3_enable_port2(Pin_2_0, eint_falling_edge, leftSensorStopISR);
@@ -101,6 +123,10 @@ bool period_init(void)
     uint8_t Pin_2_1 = 1;
     eint3_enable_port2(Pin_2_1, eint_rising_edge, rightSensorStartISR);
     eint3_enable_port2(Pin_2_1, eint_falling_edge, rightSensorStopISR);
+
+    uint8_t Pin_2_2 = 2;
+    eint3_enable_port2(Pin_2_2, eint_rising_edge, middleSensorStartISR);
+    eint3_enable_port2(Pin_2_2, eint_falling_edge, middleSensorStopISR);
 
     return true; // Must return true upon success
 }
@@ -132,15 +158,27 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-    leftSensorTrigger.setLow();
-    rightSensorTrigger.setLow();
+    switch(sensor){
 
-//    if(count % 5 == 0){
-        leftSensorTrigger.setHigh();
-        rightSensorTrigger.setHigh();
-        delay_us(20);
-//    }
-    printf("left: %d, right: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE);
+        case left:
+            leftSensorTrigger.setHigh();
+            delay_us(20);
+            break;
+
+        case right:
+            rightSensorTrigger.setHigh();
+            delay_us(20);
+            break;
+
+        case middle:
+            middleSensorTrigger.setHigh();
+            delay_us(20);
+            break;
+
+        case wait:
+            break;
+    }
+    printf("left: %d, right: %d, middle: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE, MIDDLE_DISTANCE);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
