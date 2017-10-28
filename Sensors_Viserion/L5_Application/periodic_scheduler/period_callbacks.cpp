@@ -31,21 +31,22 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+#include "can.h"
+
+#include "_can_dbc/generated_Viserion.h"
+#include "dbc_app_send_can_msg.h"
+#include "send_sensors_data.h"
+#include "receive_master_init.h"
+
 
 #include "gpio.hpp"
 #include "utilities.h"  // delay_us()
 #include "eint.h"
 #include "stdio.h"
+#include "printf_lib.h" //u0_dbg_printf();
 
-
-
-GPIO leftSensorTrigger(P2_6);
-GPIO rightSensorTrigger(P2_7);
-GPIO middleSensorTrigger(P2_7);
-
-
-
-int START, STOP, LEFT_DISTANCE, RIGHT_DISTANCE, MIDDLE_DISTANCE = 0;
+#include <iostream>
+#include <list>
 
 
 enum sensor_t {
@@ -56,6 +57,41 @@ enum sensor_t {
 };
 sensor_t sensor = left;
 
+std::list<int> list_left;
+std::list<int> list_right;
+std::list<int> list_middle;
+
+
+int mode(std::list<int>& list) {
+   int maxValue = 0, maxCount = 0;
+
+   for (std::list<int>::iterator i=list.begin(); i != list.end(); ++i) {
+      int count = 0;
+
+      for (std::list<int>::iterator j=list.begin(); j != list.end(); ++j) {
+         if (*j == *i)
+         ++count;
+      }
+
+      if (count > maxCount) {
+         maxCount = count;
+         maxValue = *i;
+      }
+   }
+
+   // add something to tackle scenario when function returns first value from the list in case there is no mode
+   list.clear();
+   return maxValue;
+}
+
+
+GPIO leftSensorTrigger(P2_6);
+GPIO rightSensorTrigger(P2_7);
+GPIO middleSensorTrigger(P2_7);
+
+
+int START = 0, STOP = 0, LEFT_DISTANCE = 0, RIGHT_DISTANCE = 0, MIDDLE_DISTANCE = 0;
+
 
 void leftSensorStartISR(void){
     START = sys_get_uptime_us();
@@ -65,6 +101,8 @@ void leftSensorStartISR(void){
 void leftSensorStopISR(void){
     STOP = sys_get_uptime_us();
     LEFT_DISTANCE = (STOP - START) / 147;
+//    u0_dbg_printf("%d ", LEFT_DISTANCE);
+    list_left.push_back(LEFT_DISTANCE);
     sensor = right;
     LE.off(1);
 }
@@ -77,6 +115,7 @@ void rightSensorStartISR(void){
 void rightSensorStopISR(void){
     STOP = sys_get_uptime_us();
     RIGHT_DISTANCE = (STOP - START) / 147;
+    list_right.push_back(RIGHT_DISTANCE);
     sensor = middle;
     LE.off(2);
 }
@@ -89,6 +128,7 @@ void middleSensorStartISR(void){
 void middleSensorStopISR(void){
     STOP = sys_get_uptime_us();
     MIDDLE_DISTANCE = (STOP - START) / 147;
+    list_middle.push_back(MIDDLE_DISTANCE);
     sensor = left;
     LE.off(3);
 }
@@ -107,6 +147,10 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    CAN_init(can1, 100, 10, 10, NULL, NULL);
+    CAN_reset_bus(can1);
+    CAN_bypass_filter_accept_all_msgs();
+
     leftSensorTrigger.setAsOutput();
     leftSensorTrigger.setLow();
 
@@ -146,44 +190,49 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-//    LOG_INFO("left: %d, right: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE);
-//    printf("left: %d, right: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE);
+    if(CAN_is_bus_off(can1))
+        CAN_reset_bus(can1);
 }
 
 void period_10Hz(uint32_t count)
 {
-    printf("________________________________________\n");
-//    LE.toggle(2);
+//    printf("left: %d, right: %d, middle: %d\n", mode(list_left), mode(list_right), mode(list_middle));
+//    here maybe can use receive_master_init();
 }
 
 void period_100Hz(uint32_t count)
 {
-    switch(sensor){
-
-        case left:
-            leftSensorTrigger.setHigh();
-            delay_us(20);
-            break;
-
-        case right:
-            rightSensorTrigger.setHigh();
-            delay_us(20);
-            break;
-
-        case middle:
-            middleSensorTrigger.setHigh();
-            delay_us(20);
-            break;
-
-        case wait:
-            break;
-    }
-    printf("left: %d, right: %d, middle: %d\n", LEFT_DISTANCE, RIGHT_DISTANCE, MIDDLE_DISTANCE);
+    send_sensors_data(mode(list_left), mode(list_right), mode(list_middle));
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    LE.toggle(4);
+    switch(sensor){
+
+        case left:
+            sensor = wait;
+            leftSensorTrigger.setHigh();
+            delay_us(25);
+            leftSensorTrigger.setLow();
+            break;
+
+        case right:
+            sensor = wait;
+            rightSensorTrigger.setHigh();
+            delay_us(25);
+            rightSensorTrigger.setLow();
+            break;
+
+        case middle:
+            sensor = wait;
+            middleSensorTrigger.setHigh();
+            delay_us(25);
+            middleSensorTrigger.setLow();
+            break;
+
+        case wait:
+            break;
+    }
 }
