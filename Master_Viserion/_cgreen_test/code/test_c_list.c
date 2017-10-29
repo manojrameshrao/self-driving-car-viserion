@@ -1,3 +1,4 @@
+/*
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -22,3 +23,4 @@ TestSuite *c_list_suite()
     add_test(suite, add_element_to_end);
     return suite;
 }
+*/

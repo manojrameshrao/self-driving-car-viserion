@@ -30,6 +30,7 @@
 
 #include <Periodic_Hearbeats/receive_heartbeats.h>
 #include <Periodic_Hearbeats/send_heartbeats.h>
+#include <Sensor_Values_Received/receive_sensor_values.h>
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
@@ -94,8 +95,9 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    receive_heartbeats(canbusno,100);
+   receive_heartbeats(canbusno,100);
    // LE.toggle(2);
+    receiveSensorValues();
 }
 
 void period_100Hz(uint32_t count)

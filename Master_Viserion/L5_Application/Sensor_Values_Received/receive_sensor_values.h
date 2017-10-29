@@ -8,10 +8,13 @@
 #ifndef RECEIVE_SENSOR_VALUES_H_
 #define RECEIVE_SENSOR_VALUES_H_
 
+//#include "_can_dbc/generated_Viserion.h"
 enum{
     sensor_Data_Id = 101,
     Motor_Speed_Id = 203
 };
 
 bool receiveSensorValues(void);
+bool checkSensorValues(void);
+
 #endif /* RECEIVE_SENSOR_VALUES_H_ */
