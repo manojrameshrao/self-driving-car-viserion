@@ -16,7 +16,8 @@ const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,25
 
 SENSORS_VALUES_t sensor_st = {0};
 
-#define MIN_DIST 10
+#define CORNER_DIST 15
+#define MIDDLE_DIST 20
 
 bool receiveSensorValues(void)
 {
@@ -36,12 +37,10 @@ bool receiveSensorValues(void)
                 checkSensorValues();
                 break;
         }
-
     }
     else
     {
         //do nothing
-
     }
 
     if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 100))
@@ -50,166 +49,80 @@ bool receiveSensorValues(void)
     }
     return true;
 }
-
 bool checkSensorValues()
 {
-  //LE.off(1);
-  uint8_t speed = 0;
-  uint8_t direction = 0;
-   if(sensor_st.SENSOR_left_in <= MIN_DIST)// || sensor_st.SENSOR_right_in<=MIN_DIST)
-   {
-       LD.setNumber(5);
-       LE.on(2);
-       speed = 2;
-       direction = 4;
-
-   }
-   else if(sensor_st.SENSOR_right_in <= MIN_DIST)
-   {
-       LD.setNumber(6);
-       LE.on(3);
-       speed = 2;
-       direction = 2;
-
-   }
-   else if(sensor_st.SENSOR_middle_in <= MIN_DIST)
-   {
-       LD.setNumber(6);
-       LE.on(3);
-       speed = 1;
-       direction = 5;
-   }
-   else
-   {
-       LD.setNumber(7);
-       LE.on(4);
-       LE.off(2);
-       LE.off(3);
-       speed = 2;
-       direction = 0;
-   }
-
-   transmit_to_motor(speed, direction);
-/*
-   if(sensor_st.SENSOR_right_in <= 10)
-   {-
-         LD.setNumber(8);
-         LE.on(3);
-         speed = 1;
-         direction = 5;
-         transmit_to_motor(speed, direction);
-   }
-   else
-   {
-         LD.setNumber(9);
-         LE.off(3);
-   }
-
-   if(sensor_st.SENSOR_middle_in <= 10)
-   {
-       LD.setNumber(2);
-       LE.on(4);
-       speed = 1;
-       direction = 5;
-       transmit_to_motor(speed, direction);
-   }
-   else
-   {*-
-       LD.setNumber(1);
-       LE.off(4);
-   }
-*/
-   /*
-    if(sensor_st.SENSOR_middle_in != 255) //middle present
+    uint8_t speed = 0;
+    uint8_t direction = 0;
+   // bool reverse = false;
+    if(sensor_st.SENSOR_middle_in <= MIDDLE_DIST) //middle detected
     {
-
-        //obstacle detected in front so check left and right
-
-        if(sensor_st.SENSOR_right_in != 255)//right present
+        if(sensor_st.SENSOR_left_in <= CORNER_DIST && sensor_st.SENSOR_right_in <= CORNER_DIST ) //left detected
         {
-            if(sensor_st.SENSOR_left_in != 255) //middle + right + left
-            {
-                //stop and take reverse and check with reverse sonar maybe
-                //output = "stop : m + l + r and reverse";
-              //   speed = 0;
-                 direction = 5;
-            }
-            else //middle + right : // All values need to be tested
-            {
-                if((sensor_st.SENSOR_middle_in <= 10) || (sensor_st.SENSOR_right_in <= 10))
-                {
-                //    speed = 0;
-                    direction = 5;
-                    //output = "stop: m + r due to m or r and reverse + left";
-                }
-                else if((sensor_st.SENSOR_middle_in < 100) || (sensor_st.SENSOR_right_in < 100))
-                {
-                    //output = "take a sharp left : m or r";
-                  //  speed = 2;
-                    direction = 1;
-                }
-                else
-                {
-                    //output = "take normal left";
-                    //go straight for some time
-                    //speed = 1;
-                    direction = 2;
-                }
-            }
+            //all connected
+            LD.setNumber(10);
+            speed = 1;
+            direction = 4; //dont care
         }
-        else //middle + left
+        else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
         {
-            //cout << "l :" << l << "\n";
-            if(sensor_st.SENSOR_left_in != 255) //check if left present : check all the values
-            {
-                if((sensor_st.SENSOR_middle_in <= 10) && (sensor_st.SENSOR_left_in <= 10))
-                {
-                    //output = "stop : m + l due to m or l and reverse + right";
-                    direction = 5;
-                }
-                else if((sensor_st.SENSOR_middle_in < 100) && (sensor_st.SENSOR_left_in < 100))
-                {
-                    //output = "take sharp right : m";
-                    direction = 3;
-                }
-                else
-                {
-                    //output = "take normal right";
-                    //go straight for some time maybe
-                    direction = 4;
-                }
-            }
-            else // only middle present
-            {
-                if(sensor_st.SENSOR_middle_in <= 10)
-                {
-                    //output = "stop :m and reverse\n";
-                    direction  = 5;
-                }
-                else if(sensor_st.SENSOR_middle_in < 100)
-                {
-                    //output = "Sharp left/left or right";
-                    direction = 1;
-                }
-                else
-                {
-                    direction = 2;
-                    //output = "Left or Right";
-                    //go straight for some time
-                }
-
-            }
-
-        }
-
+            //right + middle
+            LD.setNumber(20);
+            LE.on(1);
+            speed = 1; //maybe full left
+            direction = 2; //dont care
+       }
+       else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
+       {
+           //left + middle
+           LD.setNumber(30);
+           LE.on(2);
+           speed = 1; //maybe full right
+           direction = 2; //dont care
+       }
+       else
+       {
+           //only middle
+           LD.setNumber(40);
+           LE.off(2);
+           speed = 1;
+           direction = 3; // dont care
+       }
     }
-    else
+    else // no middle
     {
-        //output = "go straight";
-        direction = 0;
+        if(sensor_st.SENSOR_right_in <= CORNER_DIST && sensor_st.SENSOR_left_in <= CORNER_DIST)
+        {
+            //middle + right
+            LD.setNumber(50);
+            LE.on(3);
+            speed = 1;
+            direction = 1; // dont care
+        }
+        else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
+        {
+            //only right
+            LD.setNumber(60);
+            LE.off(3);
+            speed = 2;
+            direction = 2; //slight left
+        }
+        else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
+        {
+            //only left
+            LD.setNumber(70);
+            LE.on(4);
+            speed = 2;
+            direction = 4; //slight right
+        }
+        else
+        {
+            LD.setNumber(80);
+            LE.off(4);
+            speed = 2;
+            direction = 0;
+            //maybe do nothing
+        }
     }
-    //transmit_to_motor(speed, direction);
-    //LD.setLeftDigit(speed);
-   */
-    return true;//need to check
+    transmit_to_motor(speed, direction);
+    return true;
 }
