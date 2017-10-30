@@ -60,8 +60,8 @@ bool checkSensorValues()
         {
             //all connected
             LD.setNumber(10);
-            speed = 1;
-            direction = 4; //dont care
+            speed = 0;
+            direction = 0; //dont care
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
         {
