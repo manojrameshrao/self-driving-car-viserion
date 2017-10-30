@@ -91,46 +91,51 @@ GPIO middleSensorTrigger(P2_7);
 
 
 int START = 0, STOP = 0, LEFT_DISTANCE = 0, RIGHT_DISTANCE = 0, MIDDLE_DISTANCE = 0;
+int left_mode_value = 0, right_mode_value = 0, middle_mode_value = 0;
 
 
 void leftSensorStartISR(void){
     START = sys_get_uptime_us();
-    LE.on(1);
+//    LE.on(1);
 }
 
 void leftSensorStopISR(void){
     STOP = sys_get_uptime_us();
     LEFT_DISTANCE = (STOP - START) / 147;
-//    u0_dbg_printf("%d ", LEFT_DISTANCE);
+//    u0_dbg_printf("L");
     list_left.push_back(LEFT_DISTANCE);
     sensor = right;
-    LE.off(1);
+//    LE.off(1);
 }
 
 void rightSensorStartISR(void){
     START = sys_get_uptime_us();
-    LE.on(2);
+//    LE.on(2);
 }
 
 void rightSensorStopISR(void){
     STOP = sys_get_uptime_us();
     RIGHT_DISTANCE = (STOP - START) / 147;
+//    u0_dbg_printf("R");
+
     list_right.push_back(RIGHT_DISTANCE);
     sensor = middle;
-    LE.off(2);
+//    LE.off(2);
 }
 
 void middleSensorStartISR(void){
     START = sys_get_uptime_us();
-    LE.on(3);
+//    LE.on(3);
 }
 
 void middleSensorStopISR(void){
     STOP = sys_get_uptime_us();
     MIDDLE_DISTANCE = (STOP - START) / 147;
+//    u0_dbg_printf("M");
+
     list_middle.push_back(MIDDLE_DISTANCE);
     sensor = left;
-    LE.off(3);
+//    LE.off(3);
 }
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -196,13 +201,35 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-//    printf("left: %d, right: %d, middle: %d\n", mode(list_left), mode(list_right), mode(list_middle));
+        LE.off(1);
+        LE.off(2);
+        LE.off(3);
+        LE.off(4);
+
+        left_mode_value = mode(list_left);
+        right_mode_value = mode(list_right);
+        middle_mode_value = mode(list_middle);
+
+        if(left_mode_value < 20)
+            LE.on(1);
+        if(right_mode_value < 20)
+            LE.on(2);
+        if(middle_mode_value < 20)
+            LE.on(3);
+
+
+
+
+    printf("left: %d, right: %d, middle: %d\n", left_mode_value, right_mode_value, middle_mode_value);
 //    here maybe can use receive_master_init();
 }
 
 void period_100Hz(uint32_t count)
 {
-    send_sensors_data(mode(list_left), mode(list_right), mode(list_middle));
+    if(count > 500){
+        send_sensors_data(left_mode_value, right_mode_value, middle_mode_value);
+    }
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():

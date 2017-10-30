@@ -7,8 +7,10 @@
 
 #include "send_sensors_data.h"
 #include "generated_Viserion.h"
+#include "io.hpp"
 
 void send_sensors_data(int left, int right, int middle){
+
 
     SENSORS_VALUES_t sensors_values = { 0 };
 
@@ -16,6 +18,7 @@ void send_sensors_data(int left, int right, int middle){
     sensors_values.SENSOR_right_in = right;
     sensors_values.SENSOR_middle_in = middle;
 
-    dbc_encode_and_send_SENSORS_VALUES(&sensors_values);
+    if(dbc_encode_and_send_SENSORS_VALUES(&sensors_values))
+        LE.on(4);
 }
 
