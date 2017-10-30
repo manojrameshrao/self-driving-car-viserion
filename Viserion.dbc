@@ -54,8 +54,11 @@ BO_ 101 SENSORS_VALUES: 3 SENSORS
  SG_ SENSOR_middle_in : 8|8@1+ (1,0) [0|0] "Inches" MASTER
  SG_ SENSOR_right_in : 16|8@1+ (1,0) [0|0] "Inches" MASTER
 
-BO_ 203 MASTER_SPEED: 1 MASTER
- SG_ MASTER_Maintain_Speed : 0|8@1+ (1,0) [0|30] "mph" MOTOR
+BO_ 200 MASTER_INITIALIZE: 1 MASTER
+ SG_ MASTER_Init_Boards : 0|8@1+ (1,0) [0|0] "" SENSORS, MOTOR, BT, GEO
 
-BO_ 204 MASTER_DIRECTION: 1 MASTER
- SG_ MASTER_Maintain_Direction : 0|8@1+ (1,0) [0|12] "" MOTOR
+BO_ 203 MASTER_SPEED: 2 MASTER
+ SG_ MASTER_Maintain_Speed : 0|8@1+ (1,0) [0|30] "mph" MOTOR
+ SG_ MASTER_Maintain_Direction : 8|8@1+ (1,0) [0|12] "" MOTOR
+
+

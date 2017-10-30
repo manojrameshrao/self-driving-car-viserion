@@ -10,7 +10,7 @@
 
 #include"stdint.h"
 
-bool transmit_speed(uint8_t speed);
-bool transmit_direction(uint8_t direction);
+bool transmit_to_motor(uint8_t speed, uint8_t direction);
+
 
 #endif /* TRANSMIT_SENSOR_TO_MOTOR_H_ */

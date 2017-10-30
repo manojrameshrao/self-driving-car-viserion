@@ -53,7 +53,7 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    CAN_init(canbusno,100,10,10,NULL,NULL);
+    CAN_init(canbusno,100,100,100,NULL,NULL);
     CAN_reset_bus(canbusno);
     CAN_bypass_filter_accept_all_msgs();
 
@@ -95,14 +95,15 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-   receive_heartbeats(canbusno,100);
+   //receive_heartbeats(canbusno,100);
    // LE.toggle(2);
-    receiveSensorValues();
+
 }
 
 void period_100Hz(uint32_t count)
 {
-   // LE.toggle(3);
+    receiveSensorValues();
+    // LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
