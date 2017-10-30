@@ -87,7 +87,7 @@ int mode(std::list<int>& list) {
 
 GPIO leftSensorTrigger(P2_6);
 GPIO rightSensorTrigger(P2_7);
-GPIO middleSensorTrigger(P2_7);
+GPIO middleSensorTrigger(P2_8);
 
 
 int START = 0, STOP = 0, LEFT_DISTANCE = 0, RIGHT_DISTANCE = 0, MIDDLE_DISTANCE = 0;
