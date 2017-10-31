@@ -46,6 +46,9 @@ MASTER_SPEED_t speed = { 0 };
 PWM motor_speed(PWM::pwm1, 10);
 PWM motor_dir(PWM::pwm2, 10);
 
+//Default values
+static float motor_speed_val = 12, servo_dir_val=18;
+
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -111,7 +114,6 @@ void period_100Hz(uint32_t count)
 {
     can_msg_t motor_message;
     dbc_msg_hdr_t can_msg_hdr;
-    //motor_speed.set(19);
 
     while (CAN_rx(can1, &motor_message, 0)) {
 
@@ -129,20 +131,24 @@ void period_100Hz(uint32_t count)
                     motor_speed.set(value3);
                     value3 -= 0.1;
                     if (value3 <= 16.5) value3 = 16.5;
+                    motor_speed_val = value3;
                 }
                     break;
                 case 1:
                     //brakes
-                    motor_speed.set(12);
+                    //motor_speed.set(12);
+                    motor_speed_val = 12;
                     LE.on(1);
                     break;
                 case 2:
                     //forward slow
-                    motor_speed.set(19.7);
+                    //motor_speed.set(19.7);
+                    motor_speed_val = 19.7;
                     break;
                 case 3:
                     //fast
-                    motor_speed.set(20);
+                    //motor_speed.set(20);
+                    motor_speed_val = 20;
                     break;
                 case 4:
                     //turbo
@@ -155,28 +161,36 @@ void period_100Hz(uint32_t count)
             switch (speed.MASTER_Maintain_Direction) {
                 case 0:
                     //center
-                    motor_dir.set(18);
+                    //motor_dir.set(18);
+                    servo_dir_val = 18;
                     break;
                 case 1:
                     //hard left 10.9
-                    motor_dir.set(10.9);
+                    //motor_dir.set(10.9);
+                    servo_dir_val = 10.9;
                     break;
                 case 2:
                     //slight-left 14.9
-                    motor_dir.set(14.9);
+                    //motor_dir.set(14.9);
+                    servo_dir_val = 14.9;
                     break;
                 case 3:
                     //hard right 25
-                    motor_dir.set(25);
+                    //motor_dir.set(25);
+                    servo_dir_val = 25;
                     break;
                 case 4:
                     //slight right 20.7
-                    motor_dir.set(20.7);
+                    //motor_dir.set(20.7);
+                    servo_dir_val = 20.7;
                     break;
             }
         }
 
     }
+
+    motor_speed.set(motor_speed_val);
+    motor_dir.set(servo_dir_val);
 
 }
 
