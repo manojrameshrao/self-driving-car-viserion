@@ -36,6 +36,14 @@ bool receiveSensorValues(void)
                 LE.on(1);
                 checkSensorValues();
                 break;
+          /*  case 97 :
+                LE.on(2);
+                break;
+            case 98 :
+                LE.on(3);
+                break;
+            default :
+                break;*/
         }
     }
     else
@@ -45,7 +53,8 @@ bool receiveSensorValues(void)
 
     if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 100))
     {
-        //do something
+        /*transmit_to_motor(1,0);
+        LD.setNumber(19); */
     }
     return true;
 }
@@ -60,7 +69,7 @@ bool checkSensorValues()
         {
             //all connected
             LD.setNumber(10);
-            speed = 0;
+            speed = 1; //brake
             direction = 0; //dont care
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
@@ -68,23 +77,23 @@ bool checkSensorValues()
             //right + middle
             LD.setNumber(20);
             LE.on(1);
-            speed = 1; //maybe full left
-            direction = 2; //dont care
+            speed = 2; //maybe full left
+            direction = 1; //dont care
        }
        else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
        {
            //left + middle
            LD.setNumber(30);
            LE.on(2);
-           speed = 1; //maybe full right
-           direction = 2; //dont care
+           speed = 2; //maybe full right
+           direction = 3; //dont care
        }
        else
        {
            //only middle
            LD.setNumber(40);
            LE.off(2);
-           speed = 1;
+           speed = 2;
            direction = 3; // dont care
        }
     }
