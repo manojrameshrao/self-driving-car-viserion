@@ -31,112 +31,26 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+
 #include "can.h"
-
-#include "_can_dbc/generated_Viserion.h"
-#include "dbc_app_send_can_msg.h"
-#include "send_sensors_data.h"
-#include "receive_master_init.h"
-
-
-#include "gpio.hpp"
-#include "utilities.h"  // delay_us()
-#include "eint.h"
+#include "adc0.h"
 #include "stdio.h"
-#include "printf_lib.h" //u0_dbg_printf();
-
-#include <iostream>
-#include <list>
-
-
-enum sensor_t {
-    left,
-    right,
-    middle,
-    wait
-};
-sensor_t sensor = left;
-
-std::list<int> list_left;
-std::list<int> list_right;
-std::list<int> list_middle;
+#include "gpio.hpp"
+#include "utilities.h"
+#include "send_sensors_data.h"
 
 
-int mode(std::list<int>& list) {
-   int maxValue = 0, maxCount = 0;
+int adc1 = 0, adc2 = 0, adc3 = 0;
+int distance1 = 0, distance2 = 0, distance3 = 0;
+float voltage1 = 0, voltage2 = 0, voltage3 = 0;
 
-   for (std::list<int>::iterator i=list.begin(); i != list.end(); ++i) {
-      int count = 0;
-
-      for (std::list<int>::iterator j=list.begin(); j != list.end(); ++j) {
-         if (*j == *i)
-         ++count;
-      }
-
-      if (count > maxCount) {
-         maxCount = count;
-         maxValue = *i;
-      }
-   }
-
-   // add something to tackle scenario when function returns first value from the list in case there is no mode
-   list.clear();
-   return maxValue;
-}
-
+const float adc_step = 3.3 / 4096;
+const float voltage_scaling = 0.009765625;
 
 GPIO leftSensorTrigger(P2_6);
 GPIO rightSensorTrigger(P2_7);
 GPIO middleSensorTrigger(P2_8);
 
-
-int START = 0, STOP = 0, LEFT_DISTANCE = 0, RIGHT_DISTANCE = 0, MIDDLE_DISTANCE = 0;
-int left_mode_value = 0, right_mode_value = 0, middle_mode_value = 0;
-
-
-void leftSensorStartISR(void){
-    START = sys_get_uptime_us();
-//    LE.on(1);
-}
-
-void leftSensorStopISR(void){
-    STOP = sys_get_uptime_us();
-    LEFT_DISTANCE = (STOP - START) / 147;
-//    u0_dbg_printf("L");
-    list_left.push_back(LEFT_DISTANCE);
-    sensor = right;
-//    LE.off(1);
-}
-
-void rightSensorStartISR(void){
-    START = sys_get_uptime_us();
-//    LE.on(2);
-}
-
-void rightSensorStopISR(void){
-    STOP = sys_get_uptime_us();
-    RIGHT_DISTANCE = (STOP - START) / 147;
-//    u0_dbg_printf("R");
-
-    list_right.push_back(RIGHT_DISTANCE);
-    sensor = middle;
-//    LE.off(2);
-}
-
-void middleSensorStartISR(void){
-    START = sys_get_uptime_us();
-//    LE.on(3);
-}
-
-void middleSensorStopISR(void){
-    STOP = sys_get_uptime_us();
-    MIDDLE_DISTANCE = (STOP - START) / 147;
-//    u0_dbg_printf("M");
-
-    list_middle.push_back(MIDDLE_DISTANCE);
-    sensor = left;
-//    LE.off(3);
-}
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -165,17 +79,9 @@ bool period_init(void)
     middleSensorTrigger.setAsOutput();
     middleSensorTrigger.setLow();
 
-    uint8_t Pin_2_0 = 0;
-    eint3_enable_port2(Pin_2_0, eint_rising_edge, leftSensorStartISR);
-    eint3_enable_port2(Pin_2_0, eint_falling_edge, leftSensorStopISR);
-
-    uint8_t Pin_2_1 = 1;
-    eint3_enable_port2(Pin_2_1, eint_rising_edge, rightSensorStartISR);
-    eint3_enable_port2(Pin_2_1, eint_falling_edge, rightSensorStopISR);
-
-    uint8_t Pin_2_2 = 2;
-    eint3_enable_port2(Pin_2_2, eint_rising_edge, middleSensorStartISR);
-    eint3_enable_port2(Pin_2_2, eint_falling_edge, middleSensorStopISR);
+    LPC_PINCON->PINSEL1 |= (1 << 20); // ADC-3 is on P0.26, select this as ADC0.3
+    LPC_PINCON->PINSEL3 |= (3 << 28); // ADC-4 is on P1.30, select this as ADC0.4
+    LPC_PINCON->PINSEL3 |= (3 << 30); // ADC-5 is on P1.31, select this as ADC0.5
 
     return true; // Must return true upon success
 }
@@ -201,65 +107,49 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-        LE.off(1);
-        LE.off(2);
-        LE.off(3);
-        LE.off(4);
+    adc1 = adc0_get_reading(3);
+    adc2 = adc0_get_reading(4);
+    adc3 = adc0_get_reading(5);
 
-        left_mode_value = mode(list_left);
-        right_mode_value = mode(list_right);
-        middle_mode_value = mode(list_middle);
+    voltage1 = adc1 * adc_step;
+    voltage2 = adc2 * adc_step;
+    voltage3 = adc3 * adc_step;
 
-        if(left_mode_value < 20)
-            LE.on(1);
-        if(right_mode_value < 20)
-            LE.on(2);
-        if(middle_mode_value < 20)
-            LE.on(3);
+    distance1 = voltage1 / voltage_scaling;
+    distance2 = voltage2 / voltage_scaling;
+    distance3 = voltage3 / voltage_scaling;
 
+    printf("1: %d, 2: %d, 3: %d \n", distance1, distance2, distance3);
 
-
-
-    printf("left: %d, right: %d, middle: %d\n", left_mode_value, right_mode_value, middle_mode_value);
-//    here maybe can use receive_master_init();
+    if(count > 5){
+        send_sensors_data(distance1, distance2, distance3);
+    }
 }
 
 void period_100Hz(uint32_t count)
 {
-    if(count > 500){
-        send_sensors_data(left_mode_value, right_mode_value, middle_mode_value);
+    if(count % 10 == 0){
+
+        leftSensorTrigger.setHigh();
+        delay_us(25);
+        leftSensorTrigger.setLow();
+
+        rightSensorTrigger.setHigh();
+        delay_us(25);
+        rightSensorTrigger.setLow();
     }
 
+    if(count % 10 == 5){
+
+        middleSensorTrigger.setHigh();
+        delay_us(25);
+        middleSensorTrigger.setLow();
+    }
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    switch(sensor){
-
-        case left:
-            sensor = wait;
-            leftSensorTrigger.setHigh();
-            delay_us(25);
-            leftSensorTrigger.setLow();
-            break;
-
-        case right:
-            sensor = wait;
-            rightSensorTrigger.setHigh();
-            delay_us(25);
-            rightSensorTrigger.setLow();
-            break;
-
-        case middle:
-            sensor = wait;
-            middleSensorTrigger.setHigh();
-            delay_us(25);
-            middleSensorTrigger.setLow();
-            break;
-
-        case wait:
-            break;
-    }
+//    LE.toggle(4);
 }
