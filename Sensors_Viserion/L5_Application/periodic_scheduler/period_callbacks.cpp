@@ -46,7 +46,7 @@
 
 
 
-int distance1 = 0, distance2 = 0, distance3 = 0;
+int l_distance = 0, r_distance = 0, m_distance = 0;
 
 
 GPIO leftSensorTrigger(P2_6);
@@ -98,12 +98,13 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    calculate_distance(distance1, distance2, distance3);
+    calculate_distance(l_distance, r_distance, m_distance);
 
-//    printf("1: %d, 2: %d, 3: %d \n", distance1, distance2, distance3);
+//    printf("Left: %d, Middle: %d, Right: %d \n", l_distance, m_distance, r_distance);
 
     if(count > 5){
-        send_sensors_data(distance1, distance2, distance3);
+        send_sensors_data(l_distance, r_distance, m_distance);
+        LE.off(4);
     }
 }
 
