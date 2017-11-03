@@ -5,7 +5,7 @@
  *      Author: Miroslav Grubic
  */
 
-#include "dbc_app_send_can_msg.h"
+#include <periodic_scheduler/send_and_receive/dbc_app_send_can_msg.h>
 #include "can.h"
 #include "string.h"
 

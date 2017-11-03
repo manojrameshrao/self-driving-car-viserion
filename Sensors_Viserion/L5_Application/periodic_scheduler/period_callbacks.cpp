@@ -28,24 +28,26 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+#include <periodic_scheduler/send_and_receive/dbc_app_send_can_msg.h>
+#include <periodic_scheduler/send_and_receive/receive_master_init.h>
+#include <periodic_scheduler/send_and_receive/send_sensors_data.h>
+
+#include <periodic_scheduler/init_and_trigger/init_pins.h>
+#include <periodic_scheduler/init_and_trigger/trigger_left_and_right.h>
+#include <periodic_scheduler/init_and_trigger/trigger_middle.h>
+
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
 
 #include "can.h"
-#include "adc0.h"
 #include "stdio.h"
-#include "gpio.hpp"
-#include "utilities.h"
-#include "send_sensors_data.h"
+#include "calculate_distance.h"
 
 
-int adc1 = 0, adc2 = 0, adc3 = 0;
+
 int distance1 = 0, distance2 = 0, distance3 = 0;
-float voltage1 = 0, voltage2 = 0, voltage3 = 0;
 
-const float adc_step = 3.3 / 4096;
-const float voltage_scaling = 0.009765625;
 
 GPIO leftSensorTrigger(P2_6);
 GPIO rightSensorTrigger(P2_7);
@@ -70,18 +72,7 @@ bool period_init(void)
     CAN_reset_bus(can1);
     CAN_bypass_filter_accept_all_msgs();
 
-    leftSensorTrigger.setAsOutput();
-    leftSensorTrigger.setLow();
-
-    rightSensorTrigger.setAsOutput();
-    rightSensorTrigger.setLow();
-
-    middleSensorTrigger.setAsOutput();
-    middleSensorTrigger.setLow();
-
-    LPC_PINCON->PINSEL1 |= (1 << 20); // ADC-3 is on P0.26, select this as ADC0.3
-    LPC_PINCON->PINSEL3 |= (3 << 28); // ADC-4 is on P1.30, select this as ADC0.4
-    LPC_PINCON->PINSEL3 |= (3 << 30); // ADC-5 is on P1.31, select this as ADC0.5
+    init_pins(leftSensorTrigger, rightSensorTrigger, middleSensorTrigger);
 
     return true; // Must return true upon success
 }
@@ -107,19 +98,9 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    adc1 = adc0_get_reading(3);
-    adc2 = adc0_get_reading(4);
-    adc3 = adc0_get_reading(5);
+    calculate_distance(distance1, distance2, distance3);
 
-    voltage1 = adc1 * adc_step;
-    voltage2 = adc2 * adc_step;
-    voltage3 = adc3 * adc_step;
-
-    distance1 = voltage1 / voltage_scaling;
-    distance2 = voltage2 / voltage_scaling;
-    distance3 = voltage3 / voltage_scaling;
-
-    printf("1: %d, 2: %d, 3: %d \n", distance1, distance2, distance3);
+//    printf("1: %d, 2: %d, 3: %d \n", distance1, distance2, distance3);
 
     if(count > 5){
         send_sensors_data(distance1, distance2, distance3);
@@ -128,23 +109,8 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-    if(count % 10 == 0){
-
-        leftSensorTrigger.setHigh();
-        delay_us(25);
-        leftSensorTrigger.setLow();
-
-        rightSensorTrigger.setHigh();
-        delay_us(25);
-        rightSensorTrigger.setLow();
-    }
-
-    if(count % 10 == 5){
-
-        middleSensorTrigger.setHigh();
-        delay_us(25);
-        middleSensorTrigger.setLow();
-    }
+    trigger_left_and_right(count, leftSensorTrigger, rightSensorTrigger);
+    trigger_middle(count, middleSensorTrigger);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():

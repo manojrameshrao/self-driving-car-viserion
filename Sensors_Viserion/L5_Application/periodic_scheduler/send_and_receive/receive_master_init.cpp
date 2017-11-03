@@ -6,7 +6,7 @@
  */
 
 
-#include "receive_master_init.h"
+#include <periodic_scheduler/send_and_receive/receive_master_init.h>
 #include "can.h"
 #include "_can_dbc/generated_Viserion.h"
 #include "io.hpp"

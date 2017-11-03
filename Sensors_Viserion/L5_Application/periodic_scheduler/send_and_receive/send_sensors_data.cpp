@@ -5,7 +5,7 @@
  *      Author: Miroslav Grubic
  */
 
-#include "send_sensors_data.h"
+#include <periodic_scheduler/send_and_receive/send_sensors_data.h>
 #include "generated_Viserion.h"
 #include "io.hpp"
 
