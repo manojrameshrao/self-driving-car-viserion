@@ -2,7 +2,7 @@
  * trigger_middle.cpp
  *
  *  Created on: Nov 2, 2017
- *      Author: ja
+ *      Author: Miroslav Grubic
  */
 
 #include "trigger_middle.h"

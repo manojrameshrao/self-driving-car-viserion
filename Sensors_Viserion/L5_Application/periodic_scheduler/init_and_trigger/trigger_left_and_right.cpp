@@ -2,7 +2,7 @@
  * trigger_left_and_right.cpp
  *
  *  Created on: Nov 2, 2017
- *      Author: ja
+ *      Author: Miroslav Grubic
  */
 
 #include "trigger_left_and_right.h"
