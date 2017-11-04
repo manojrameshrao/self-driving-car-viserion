@@ -31,15 +31,23 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-
 #include "can.h"
-
 #include "_can_dbc/generated_Viserion.h"
 #include "dbc_app_send_can_msg.h"
 #include "send_bluetooth_heartbeat.h"
 #include "receive_heartbeats.h"
+#include "gpio.hpp"
+#include "uart3.hpp"
+#include <string>
+#include <cstdlib>
+#include <stdio.h>
+#include <string.h>
 
 
+using namespace std;
+
+Uart3& u3=Uart3::getInstance();
+char temp[21];
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -58,6 +66,7 @@ bool period_init(void)
 	CAN_init(can1, 100, 5, 5, NULL, NULL);
 	CAN_reset_bus(can1);
 	CAN_bypass_filter_accept_all_msgs();
+	u3.init(9600);
 	return true; // Must return true upon success
 }
 
@@ -78,7 +87,7 @@ void period_1Hz(uint32_t count)
 {
 	if(CAN_is_bus_off(can1))
 	{
-	    CAN_reset_bus(can1);
+		CAN_reset_bus(can1);
 	}
 	send_bluetooth_hartbeat();
 
@@ -90,8 +99,29 @@ void period_10Hz(uint32_t count)
 
 }
 
+string coordinates;
+double latti=0;
+double longi=0;
+char *latt;
+char *longii;
+
 void period_100Hz(uint32_t count)
 {
+	if(u3.getRxQueueSize()>=21)
+	{
+		u3.gets(temp,21,0);
+		coordinates = temp;
+
+		latt=strtok(temp,",");
+		longii=strtok(NULL,",");
+		latti=strtod(latt,NULL);
+		longi=strtod(longii,NULL);
+
+		printf("%f %f\n",latti,longi);
+
+
+		LE.toggle(1);
+	}
 
 }
 
