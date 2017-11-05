@@ -50,23 +50,23 @@ MASTER_SPEED_t speed = { 0 };
 PWM motor_speed(PWM::pwm1, 10);
 PWM motor_dir(PWM::pwm2, 10);
 
-#define     FINAL_DRIVE     12.58           //Gear to Wheel Ratio: Wheel rotates 1x for every 12.58 revolution of the DC motor
-#define     PI              3.14159
-#define     WHEEL_RADIUS    2.794      //Unit is centimeters
-#define     SECS_PER_HOUR   3600
-#define     CM_PER_KM    160934.4
+#define GEAR_RATIO 					    12.58			//Gear to Wheel Ratio: Wheel rotates 1x for every 12.58 revolution of the DC motor
+#define PI								3.14159
+#define WHEEL_RADIUS					2.794			//Unit is centimeters
+#define SECS_PER_HOUR					3600
+#define CENTIMETERS_PER_KM			    100000
 
-#define SPEED_SLOW 10
+GPIO RPM_PIN(P2_6);
+
+uint32_t no_of_revolution;
+float value,kph,speed_req;
+int count_speed=0;
+int rps=0;
 
 //Default values
 static float motor_speed_val = 19, servo_dir_val=18;
 static int count_rps;
 GPIO rpm_pin(P0_29);
-void find_speed();
-void count_rpm();
-
-float speed_kph;
-float speed_req = 10;
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -80,6 +80,9 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
+void count_rpm(){
+	no_of_revolution++;
+}
 
 void bus_off(uint32_t)
 {
@@ -117,18 +120,21 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    if (CAN_is_bus_off(can1)) CAN_reset_bus(can1);
+	if (CAN_is_bus_off(can1)) CAN_reset_bus(can1);
 
-    //motor_speed.set(19.5);
-    //LE.on(3);
-    //send_motor_heartbeat();
-    //receive_heartbeats();
+	    kph = 10 * (((2 * PI * WHEEL_RADIUS) * no_of_revolution * SECS_PER_HOUR) / (CENTIMETERS_PER_KM * GEAR_RATIO));
+	    printf("no_of_revolution = %d %f mph \n",no_of_revolution,kph);
+	    LD.setNumber(kph);
+
+	    no_of_revolution=0;
+	    motor_speed.set(19.5);
+	    LE.on(3);
+	    //send_motor_heartbeat();
+	    //receive_heartbeats();
 }
 
 void period_10Hz(uint32_t count)
 {
-
-
     // LE.toggle(2);
 }
 
@@ -212,49 +218,40 @@ void period_100Hz(uint32_t count)
         }
 
     }
-
-
-    if(SW.getSwitch(1))
-        motor_speed_val= 18; //init
-    else if(SW.getSwitch(2))
-        motor_speed_val=20; //forward
-    else if(SW.getSwitch(3))
-        motor_speed_val=16.3;//reverse gear
-    else if(SW.getSwitch(4))
-        motor_speed_val=16.5; //reverse
-
-    u0_dbg_printf("\nPWM value: %f",motor_speed_val);
     LD.setNumber(motor_speed_val);
 
-
     motor_speed.set(motor_speed_val);
-
-    //find_speed();
     //motor_dir.set(servo_dir_val);
 
+    if(kph<speed_req)
+        {
+        	count_speed++;
+        	if((count_speed%5)==0)
+        	{
+        	motor_speed_val=+0.15;
+        	   if(motor_speed_val>20.5)
+        		   motor_speed_val=20.5;
+        	motor_speed.set(motor_speed_val);
+        	count_speed=0;
+        	}
+        }
+        else if(kph>speed_req)
+        {
+        	count_speed++;
+        	if((count_speed%5)==0)
+        	  {
+        	motor_speed_val=-0.1;
+        	   if(motor_speed_val<19.5)
+        	      motor_speed_val=19.5;
+        	motor_speed.set(motor_speed_val);
+        	count_speed=0;
+        	  }
+        }
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-
     //LE.toggle(4);
-}
-
-
-void count_rpm(){
-    count_rps++;
-}
-void find_speed(){
-    speed_kph = 100 * (((2 * PI * WHEEL_RADIUS) * count_rps * SECS_PER_HOUR) / (CM_PER_KM * FINAL_DRIVE));
-    count_rps =0;
-
-   u0_dbg_printf("\nCurrent Speed:%f",speed_kph);
-    LD.setNumber(speed_kph);
-    if(speed_kph<speed_req)
-        motor_speed_val=motor_speed_val+0.1;
-    else if(speed_kph>speed_req)
-        motor_speed_val-=0.1;
-
 }
