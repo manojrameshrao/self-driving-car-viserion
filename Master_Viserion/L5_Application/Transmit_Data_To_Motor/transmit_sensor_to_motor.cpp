@@ -5,7 +5,7 @@
  *      Author: Admin
  */
 #include "can.h"
-#include "Sensor_Values_Received/transmit_sensor_to_motor.h"
+#include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
 #include "generated_Viserion.h"
 
 bool transmit_to_motor(uint8_t speed, uint8_t direction )

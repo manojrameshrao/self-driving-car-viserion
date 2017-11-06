@@ -102,6 +102,19 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
+/*    static bool motorInit = false;
+    if(!motorInit)
+    {
+        transmit_to_motor(3,0);
+        delay_ms(2);
+        transmit_to_motor(2,0);
+        motorInit = true;
+    }
+    else
+    {
+        receiveSensorValues();
+    }
+*/
     receiveSensorValues();
     // LE.toggle(3);
 }
