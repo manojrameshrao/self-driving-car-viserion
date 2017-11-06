@@ -34,6 +34,7 @@
 #include "can.h"
 #include "periodic_scheduler/geoHBtx.h"
 #include "periodic_scheduler/geoHBrx.h"
+#include "GPS.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -49,9 +50,12 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+
     CAN_init(can1, 100, 10, 10, NULL, NULL);
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
+
+    init_GPS_module(); //call to initialize GPS module
     return true; // Must return true upon success
 }
 
