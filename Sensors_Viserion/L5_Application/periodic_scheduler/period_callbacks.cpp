@@ -98,14 +98,38 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
+
+
     calculate_distance(l_distance, r_distance, m_distance);
 
-//    printf("Left: %d, Middle: %d, Right: %d \n", l_distance, m_distance, r_distance);
+    printf("Left: %d, Middle: %d, Right: %d \n", l_distance, m_distance, r_distance);
 
     if(count > 5){
         send_sensors_data(l_distance, r_distance, m_distance);
         LE.off(4);
     }
+
+
+    if(l_distance <= 40 && l_distance > 25)
+        LE.toggle(1);
+    else if(l_distance <= 25)
+        LE.on(1);
+    else
+        LE.off(1);
+
+    if(m_distance <= 40 && m_distance > 25)
+        LE.toggle(2);
+    else if(m_distance <= 25)
+        LE.on(2);
+    else
+        LE.off(2);
+
+    if(r_distance <= 40 && r_distance > 25)
+        LE.toggle(3);
+    else if(r_distance <= 25)
+        LE.on(3);
+    else
+        LE.off(3);
 }
 
 void period_100Hz(uint32_t count)
