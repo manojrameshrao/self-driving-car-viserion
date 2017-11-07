@@ -32,79 +32,54 @@ NS_ :
 
 BS_:
 
-BU_: DBG DRIVER IO MOTOR SENSOR
+BU_: DBG MASTER MOTOR SENSORS GEO BT
 
+BO_ 95 HB_SENSORS: 1 SENSORS
+ SG_ SENSOR_ALIVE : 0|1@1+ (1,0) [0|0] "HB-S" MASTER,MOTOR,GEO,BT
 
-BO_ 500 DBC_TEST1: 8 IO
- SG_ DBC_TEST1_unsigned1 : 0|8@1+ (1,0) [0|0] "" DBG
- SG_ DBC_TEST1_unsigned_minmax : 8|8@1+ (1,0) [0|100] "" DBG
- SG_ DBC_TEST1_enum : 32|8@1+ (1,0) [0|0] "" DBG
- SG_ DBC_TEST1_float : 40|8@1+ (0.5,0) [0|0] "" DBG
- SG_ DBC_TEST1_float_signed : 48|16@1+ (0.001,0) [0|65.535] "" DBG
+BO_ 96 HB_MOTORS: 1 MOTOR
+ SG_ MOTOR_ALIVE : 0|1@1+ (1,0) [0|0] "HB-M" MASTER,SENSORS,GEO,BT
 
-BO_ 501 DBC_TEST2: 8 IO
- SG_ DBC_TEST2_real_signed1 : 6|12@1- (1,0) [0|0] "" DBG
- SG_ DBC_TEST2_real_signed2 : 18|18@1- (1,0) [0|0] "" DBG
- SG_ DBC_TEST2_signed : 36|8@1+ (1,-128) [0|0] "" DBG
- SG_ DBC_TEST2_signed_minmax : 44|16@1+ (1,-32768) [-32768|32767] "" DBG
+BO_ 97 HB_GEO: 1 GEO
+ SG_ GEO_ALIVE : 0|1@1+ (1,0) [0|0] "HB-G" MASTER,SENSORS,MOTOR,BT
 
-BO_ 502 DBC_TEST3: 8 IO
- SG_ DBC_TEST3_real_signed1 : 2|4@1- (1,-5) [0|0] "" DBG
- SG_ DBC_TEST3_real_signed2 : 8|8@1- (1,4) [0|0] "" DBG
+BO_ 98 HB_BT: 1 BT
+ SG_ BT_ALIVE : 0|1@1+ (1,0) [0|0] "HB-BT" MASTER,SENSORS,MOTOR,GEO
 
-BO_ 100 DRIVER_HEARTBEAT: 1 DRIVER
- SG_ DRIVER_HEARTBEAT_cmd : 0|8@1+ (1,0) [0|0] "" SENSOR,MOTOR
+BO_ 99 HB_MASTER: 1 MASTER
+ SG_ MASTER_ALIVE : 0|1@1+ (1,0) [0|0] "HB-MT" BT,SENSORS,MOTOR,GEO
 
-BO_ 101 MOTOR_CMD: 1 DRIVER
- SG_ MOTOR_CMD_steer : 0|4@1+ (1,-5) [-5|5] "" MOTOR
- SG_ MOTOR_CMD_drive : 4|4@1+ (1,0) [0|9] "" MOTOR
+BO_ 100 SENSOR_CRITICAL: 1 SENSOR
+ SG_ SENSOR_Stop_Motor : 0|8@1+ (1,0) [0|0] "" MASTER, MOTOR
 
-BO_ 400 MOTOR_STATUS: 3 MOTOR
- SG_ MOTOR_STATUS_wheel_error : 0|1@1+ (1,0) [0|0] "" DRIVER,IO
- SG_ MOTOR_STATUS_speed_kph : 8|16@1+ (0.001,0) [0|0] "kph" DRIVER,IO
+BO_ 101 SENSOR_VALUES: 2 SENSOR
+ SG_ SENSOR_Send_Rawvalues : 0|16@1+ (0.01,0) [0|0] "" MASTER
 
-BO_ 200 SENSOR_SONARS: 8 SENSOR
- SG_ SENSOR_SONARS_mux M : 0|4@1+ (1,0) [0|0] "" DRIVER,IO
- SG_ SENSOR_SONARS_err_count : 4|12@1+ (1,0) [0|0] "" DRIVER,IO
- SG_ SENSOR_SONARS_left m0 : 16|12@1+ (0.1,0) [0|0] "" DRIVER,IO
- SG_ SENSOR_SONARS_middle m0 : 28|12@1+ (0.1,0) [0|0] "" DRIVER,IO
- SG_ SENSOR_SONARS_right m0 : 40|12@1+ (0.1,0) [0|0] "" DRIVER,IO
- SG_ SENSOR_SONARS_rear m0 : 52|12@1+ (0.1,0) [0|0] "" DRIVER,IO
- SG_ SENSOR_SONARS_no_filt_left m1 : 16|12@1+ (0.1,0) [0|0] "" DBG
- SG_ SENSOR_SONARS_no_filt_middle m1 : 28|12@1+ (0.1,0) [0|0] "" DBG
- SG_ SENSOR_SONARS_no_filt_right m1 : 40|12@1+ (0.1,0) [0|0] "" DBG
- SG_ SENSOR_SONARS_no_filt_rear m1 : 52|12@1+ (0.1,0) [0|0] "" DBG
+BO_ 200 MASTER_INITIALIZE: 1 MASTER
+ SG_ MASTER_Init_Boards : 0|8@1+ (1,0) [0|0] "" SENSORS, MOTOR, BT, GEO
 
-BO_ 503 DBC_TEST4: 8 IO
- SG_ DBC_TEST4_real_signed1 : 0|32@1- (1,0) [0|0] "" DBG
- SG_ DBC_TEST4_real_signed2 : 32|16@1- (1,0) [-32768|32767] "" DBG
- SG_ DBC_TEST4_real_overflow : 48|16@1+ (1,0) [0|0] "" DBG
+BO_ 201 MASTER_CURRENT_DIRECTION: 1 MASTER
+ SG_ MASTER_Get_Direction : 0|8@1+ (1,0) [0|0] "" GEO
 
+BO_ 202 MASTER_CURRENT_COORDINATES: 1 MASTER
+ SG_ MASTER_Get_COORDINATES : 0|8@1+ (1,0) [0|0] "" GEO
 
+BO_ 203 MASTER_SPEED: 1 MASTER
+ SG_ MASTER_Maintain_Speed : 0|8@1+ (1,0) [0|30] "mph" MOTOR
 
-CM_ BU_ DRIVER "The driver controller driving the car";
-CM_ BU_ MOTOR "The motor controller of the car";
-CM_ BU_ SENSOR "The sensor controller of the car";
-CM_ BO_ 100 "Sync message used to synchronize the controllers";
+BO_ 204 MASTER_DIRECTION: 1 MASTER
+ SG_ MASTER_Maintain_Direction : 0|8@1+ (1,0) [0|12] "" MOTOR
 
-BA_DEF_ "BusType" STRING ;
-BA_DEF_ BO_ "GenMsgCycleTime" INT 0 0;
-BA_DEF_ SG_ "FieldType" STRING ;
+BO_ 301 MOTOR_STATUS: 1 MOTOR
+ SG_ MOTOR_Send_Speed : 0|8@1+ (0.1,0) [0|0] "mph" MASTER
 
-BA_DEF_DEF_ "BusType" "CAN";
-BA_DEF_DEF_ "FieldType" "";
-BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BO_ 400 SEND_COORDINATES: 8 GEO
+ SG_ SEND_LATTITUDE : 0|30@1+ (0.000001,-180) [-180|180] "DEGREE" MASTER
+ SG_ SEND_LONGITUDE : 30|30@1+ (0.000001,-180) [-180|180] "DEGREE" MASTER
 
-BA_ "GenMsgCycleTime" BO_ 500 100;
-BA_ "GenMsgCycleTime" BO_ 100 1000;
-BA_ "GenMsgCycleTime" BO_ 101 100;
-BA_ "GenMsgCycleTime" BO_ 400 100;
-BA_ "GenMsgCycleTime" BO_ 200 100;
-BA_ "FieldType" SG_ 500 DBC_TEST1_enum "DBC_TEST1_enum";
-BA_ "FieldType" SG_ 100 DRIVER_HEARTBEAT_cmd "DRIVER_HEARTBEAT_cmd";
+BO_ 500 GET_START_COORDINATES: 1 BT
+ SG_ GET_COORDINATES : 0|4@1+ (1,0) [0|0] "" MASTER,GEO
 
-
-VAL_ 500 DBC_TEST1_enum 2 "DBC_TEST1_enum_val_two" 1 "DBC_TEST1_enum_val_one" ;
-VAL_ 100 DRIVER_HEARTBEAT_cmd 2 "DRIVER_HEARTBEAT_cmd_REBOOT" 1 "DRIVER_HEARTBEAT_cmd_SYNC" 0 "DRIVER_HEARTBEAT_cmd_NOOP" ;
-
-
+BO_ 503 GET_ROUTE_COORDINATES: 8 BT
+ SG_ SET_LATTITUDE : 0|30@1+ (0.000001,-180) [-180|180] "DEGREE" MASTER
+ SG_ SET_LONGITUDE : 30|30@1+ (0.000001,-180) [-180|180] "DEGREE" MASTER
