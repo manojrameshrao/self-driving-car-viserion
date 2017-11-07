@@ -15,16 +15,14 @@ const uint32_t                             SENSORS_VALUES__MIA_MS  = {10000};
 const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,255};
 
 SENSORS_VALUES_t sensor_st = {0};
-SENSORS_VALUES_t minCheck = {5, 5, 5};
-//SENSORS_VALUES_t maxCheck = {40,40,40};
 
-#define CORNER_DIST 30 //15
-#define MIDDLE_DIST 40 //20
-#define MIN_DIST 10
+#define CORNER_DIST 25 //15 25
+#define MIDDLE_DIST 25//20  25
+#define MIN_MIDDLE_DIST 10
+#define MIN_CORNER_DIST 10
 
 bool receiveSensorValues(void)
 {
-
     can_msg_t can_msg = {0};
     dbc_msg_hdr_t msgRx = {0};
     if(CAN_rx(can1, &can_msg, 0))
@@ -36,44 +34,10 @@ bool receiveSensorValues(void)
             case sensor_Data_Id :
                 dbc_decode_SENSORS_VALUES(&sensor_st, can_msg.data.bytes, &msgRx);
                 LE.on(1);
-                if(sensor_st.SENSOR_left_in >= 5)
-                {
-                    minCheck.SENSOR_left_in = sensor_st.SENSOR_left_in;
-                }
-                else{
-                    sensor_st.SENSOR_left_in = minCheck.SENSOR_left_in;
-                }
-                if(sensor_st.SENSOR_right_in >= 5)
-                {
-                    minCheck.SENSOR_right_in = sensor_st.SENSOR_right_in;
-                }
-                else{
-                    sensor_st.SENSOR_right_in = minCheck.SENSOR_right_in;
-                }
-                if(sensor_st.SENSOR_middle_in >= 5)
-                {
-                    minCheck.SENSOR_middle_in = sensor_st.SENSOR_middle_in;
-                }
-                else{
-                    sensor_st.SENSOR_middle_in = minCheck.SENSOR_middle_in;
-                }
                 checkSensorValues();
                 break;
-                /*  case 97 :
-                LE.on(2);
-                break;
-            case 98 :
-                LE.on(3);
-                break;
-            default :
-                break;*/
         }
     }
-    else
-    {
-        //do nothing
-    }
-
     if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 100))
     {
         transmit_to_motor(1,0);
@@ -85,103 +49,75 @@ bool checkSensorValues()
 {
     uint8_t speed = 0;
     uint8_t direction = 0;
-    // bool reverse = false;
-    if(sensor_st.SENSOR_middle_in <= MIDDLE_DIST) //middle detected
+    if(sensor_st.SENSOR_middle_in <= MIN_MIDDLE_DIST) //if middle : 0 to 10
     {
-        if(sensor_st.SENSOR_left_in <= CORNER_DIST && sensor_st.SENSOR_right_in <= CORNER_DIST ) //left detected
+        LD.setNumber(5);
+        speed = 1; //break
+        direction = 0; // straight
+    }
+    else if(sensor_st.SENSOR_middle_in > MIN_MIDDLE_DIST && sensor_st.SENSOR_middle_in <= MIDDLE_DIST) //middle detected 11 - 25
+    {
+        if(sensor_st.SENSOR_left_in <= CORNER_DIST && sensor_st.SENSOR_right_in <= CORNER_DIST )
         {
-            //all connected
-            LD.setNumber(10);
-            speed = 1; //brake
-            direction = 0; //dont care
+            //left(0-25) + middle(11 - 25) + right(0-25)
+            LD.setNumber(50);
+            speed = 1; //prev : brake, now : reverse
+            direction = 0; //straight
         }
-        else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
+        else if(sensor_st.SENSOR_right_in <= CORNER_DIST) // right(0 - 25) + middle(11 - 25)
         {
-            //right + middle
-            /*if(sensor_st.SENSOR_right_in <= MIN_DIST || sensor_st.SENSOR_middle_in <= MIN_DIST)
-            {
-                LD.setNumber(22);
-                speed = 1;//break
-                direction = 0;//straight
-            }
-            else*/
-            {
-                LD.setNumber(20);
-                LE.on(1);
-                speed = 2; //maybe full left
-                direction = 1; //dont care
-            }
-
+            LD.setNumber(70);
+            speed = 2; //slow
+            direction = 1; //full left
         }
-        else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
+        else if(sensor_st.SENSOR_left_in <= CORNER_DIST)  //left(0 - 25) + middle (11 -25)
         {
-            //left + middle
-           /* if(sensor_st.SENSOR_right_in <= MIN_DIST || sensor_st.SENSOR_middle_in <= MIN_DIST)
-            {
-                LD.setNumber(32);
-                speed = 1;
-                direction = 0;
-            }
-            else*/
-            {
-                LD.setNumber(30);
-                LE.on(2);
-                speed = 2; //maybe full right
-                direction = 3; //dont care
-            }
+            LD.setNumber(60);
+            speed = 2; //slow
+            direction = 3; //full right
         }
-        else
+        else //middle(11 - 25)
         {
-            //only middle
-            if(sensor_st.SENSOR_middle_in <= CORNER_DIST)
-            {
-                LD.setNumber(40);
-                LE.off(2);
-                speed = 1; //break
-                direction = 0; // straight
-            }
-            else
-            {
-                LD.setNumber(45);
-                //LE.off()
-                speed = 2; //slow
-                direction = 0; //straight
-            }
+            LD.setNumber(20);
+            speed = 2; //slow
+            direction = 2; // now : slight left prev :straight
         }
     }
-    else // no middle
+    else // (middle > 25)
     {
+       /*if(sensor_st.SENSOR_left_in <= MIN_CORNER_DIST && sensor_st.SENSOR_right_in <= MIN_CORNER_DIST)
+        {
+            //LD.setNumber()
+            speed = 1; //brake
+            direction = 0; // straight
+        }*/
         if(sensor_st.SENSOR_right_in <= CORNER_DIST && sensor_st.SENSOR_left_in <= CORNER_DIST)
         {
-            //middle + right
-            LD.setNumber(50);
-            LE.on(3);
-            speed = 1;      //break : maybe add reverse
+            // middle(25 - 256), left(0 - 25), right(0 - 25)
+            LD.setNumber(40);
+            speed = 2;      //go straight and slow,  break : maybe add reverse
             direction = 0; // straight
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
         {
-            //only right
-            LD.setNumber(60);
-            LE.off(3);
-            speed = 2;
+            //middle(> 25), left(> 25), right(0 - 25)
+            LD.setNumber(30);
+            speed = 2; //slow
             direction = 2; //slight left
         }
         else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
         {
-            //only left
-            LD.setNumber(70);
-            LE.on(4);
-            speed = 2;
+            //middle(> 25), left(0 - 25), right(> 25)
+            LD.setNumber(10);
+            speed = 2; //slow
             direction = 4; //slight right
         }
         else
         {
-            LD.setNumber(80);
-            LE.off(4);
-            speed = 2;
-            direction = 0;
-            //maybe do nothing
+            //middle,left, right (> 25)
+            LD.setNumber(90);
+            speed = 3; //slow
+            direction = 0; //straight
         }
     }
     transmit_to_motor(speed, direction);
