@@ -49,7 +49,7 @@
 
 MASTER_SPEED_t speed = { 0 };
 
-MOTOR_STATUS_t motor_send_speed={1};
+MOTOR_STATUS_t sending_speed_kph={1};
 
 PWM motor_speed(PWM::pwm1, 10);
 PWM motor_dir(PWM::pwm2, 10);
@@ -57,8 +57,8 @@ PWM motor_dir(PWM::pwm2, 10);
 Uart3& u3 = Uart3::getInstance();
 
 const float MOTOR_INIT = 18;
-#define FORWARD_SLOW        18.8
-#define FORWARD_MEDIUM      19    //19.2
+#define FORWARD_SLOW        19
+#define FORWARD_MEDIUM      19.2    //19.2
 #define FORWARD_FAST        20.5
 #define REVERSE             16.3
 #define BRAKES              12
@@ -75,7 +75,7 @@ const float MOTOR_INIT = 18;
 #define CONST_KPH                       0.036
 
 #define STOP_SPEED                      1
-#define SLOW_SPEED                      8
+#define SLOW_SPEED                      10 //8
 
 uint32_t no_of_revolution = 0;
 float value, kph = 0;
@@ -84,9 +84,10 @@ int count_speed = 0;
 int rps = 0;
 
 int stop_flag = 0;
+int slow_flag=0;
 
 float compare_pwm=0;
-
+volatile uint8_t speed_calc = 1;
 int count_10, count_30, count_50, count_100;
 
 uint8_t speed_curr=0;
@@ -98,7 +99,7 @@ uint8_t dir_prev=10;
 //Default values
 static float motor_speed_val = MOTOR_INIT, servo_dir_val = 18;
 static int count_rps, reverse_count = 0;
-GPIO rpm_pin(P0_29);
+GPIO rpm_pin(P2_6);
 char buffer_file[50];
 
 char num[5] = { 0 };
@@ -119,6 +120,7 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 void count_rpm()
 {
+   // if(speed_calc==1)
     no_of_revolution++;
 }
 
@@ -145,7 +147,7 @@ bool period_init(void)
 
     //Set GPIO as interrupt pin connected to RPM sensor
     rpm_pin.setAsInput();
-    eint3_enable_port0(29, eint_falling_edge, count_rpm);
+    eint3_enable_port2(6, eint_falling_edge, count_rpm);
 
     //Bluetooth
     u3.init(9600);
@@ -167,20 +169,19 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-
+    //speed_calc = 0;
     //Calculate speed
     kph = (2 * PI * WHEEL_RADIUS * CONST_KPH * no_of_revolution);
-
+    sending_speed_kph.MOTOR_Send_Speed=kph;
+    dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
     no_of_revolution = 0;
-
+    //LD.setNumber(no_of_revolution);
     if (CAN_is_bus_off(can1)) CAN_reset_bus(can1);
 
     send_motor_heartbeat();
     receive_heartbeats();
 
-    motor_send_speed.MOTOR_Send_Speed=kph;
-    dbc_encode_and_send_MOTOR_STATUS(&motor_send_speed);
-
+    //speed_calc =1;
 }
 void period_10Hz(uint32_t count)
 {
@@ -225,6 +226,7 @@ void period_100Hz(uint32_t count)
                     //forward slow
                     compare_pwm = FORWARD_SLOW;
                     speed_req = SLOW_SPEED-1;
+                    slow_flag=1;
                     //    LE.off(1);
                     break;
                 case 3:
@@ -255,6 +257,7 @@ void period_100Hz(uint32_t count)
                 case 1:
                     //hard left 10.9
                     servo_dir_val = SERVO_HARD_LEFT;
+                    //servo_dir_val = SERVO_SLIGHT_LEFT;
                     break;
                 case 2:
                     //slight-left 14.9
@@ -263,6 +266,7 @@ void period_100Hz(uint32_t count)
                 case 3:
                     //hard right 25
                     servo_dir_val = SERVO_HARD_RIGHT;
+                    //servo_dir_val = SERVO_SLIGHT_RIGHT;
                     break;
                 case 4:
                     //slight right 20.7
@@ -274,11 +278,13 @@ void period_100Hz(uint32_t count)
         }
     }
 
-   // compare_pwm = motor_speed_val;
+    //compare_pwm = motor_speed_val;
     motor_speed.set(motor_speed_val);
     motor_dir.set(servo_dir_val);
     LD.setNumber(kph);
     count_speed++;
+
+   // motor_speed.set(FORWARD_MEDIUM);
 
 /*    if(SW.getSwitch(1))
         motor_speed_val=18;
@@ -299,19 +305,32 @@ void period_1000Hz(uint32_t count)
     }
     else if (kph > speed_req) {
         {
-            motor_speed_val -= 0.003;
+            /*if(slow_flag==1){
+                motor_speed_val-=0.1;
+            }else{*/
+            motor_speed_val -= 0.04;
             if (motor_speed_val <= compare_pwm) motor_speed_val = compare_pwm;
             count_speed = 0;
+        //}
         }
     }
     else if (kph < speed_req) {
         {
-            motor_speed_val += 0.001;
+          /*  if(slow_flag==1){
+                motor_speed_val+=0.1;
+            }else{*/
+            motor_speed_val += 0.03;//0.01
             if (motor_speed_val > compare_pwm) motor_speed_val = compare_pwm;
             count_speed = 0;
+            //}
+
 
         }
+
     }
+
+  /*  if(motor_speed_val>=18.8&& motor_speed_val<19.01)
+                slow_flag=0;*/
 
     if(stop_flag==1 && speed_req!=STOP_SPEED){
         motor_speed_val=18.7;
