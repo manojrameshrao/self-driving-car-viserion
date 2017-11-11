@@ -8,7 +8,13 @@
 
 #include "init_pins.h"
 
-
+/**
+ * Function that initialize three GPIO pins as output pins to trigger sensors
+ * and set them to low since when pulled to high (in one of period_xHz tasks) will
+ * trigger the sensors.
+ * Also setting three pins P0.26, P1.30 and P1.31 as ADC
+ * @l_trigger, r_trigger and m_trigger objects of GPIO class defining pins to trigger sensors
+ */
 void init_pins(GPIO &l_trigger, GPIO &r_trigger, GPIO &m_trigger){
 
     l_trigger.setAsOutput();

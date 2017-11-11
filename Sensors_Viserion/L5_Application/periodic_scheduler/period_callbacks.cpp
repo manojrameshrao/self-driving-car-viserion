@@ -33,8 +33,9 @@
 #include <periodic_scheduler/send_and_receive/send_sensors_data.h>
 
 #include <periodic_scheduler/init_and_trigger/init_pins.h>
-#include <periodic_scheduler/init_and_trigger/trigger_left_and_right.h>
+#include <periodic_scheduler/init_and_trigger/trigger_left.h>
 #include <periodic_scheduler/init_and_trigger/trigger_middle.h>
+#include <periodic_scheduler/init_and_trigger/trigger_right.h>
 
 #include <stdint.h>
 #include "io.hpp"
@@ -43,12 +44,13 @@
 #include "can.h"
 #include "stdio.h"
 #include "calculate_distance.h"
+#include "led_on.h"
 
 
-
+/* Calculated distances in inches will be stored here */
 int l_distance = 0, r_distance = 0, m_distance = 0;
 
-
+/* Configure three pins P2.6 P2.7 and P2.8 as GPIO */
 GPIO leftSensorTrigger(P2_6);
 GPIO rightSensorTrigger(P2_7);
 GPIO middleSensorTrigger(P2_8);
@@ -98,44 +100,27 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-
-
     calculate_distance(l_distance, r_distance, m_distance);
 
     printf("Left: %d, Middle: %d, Right: %d \n", l_distance, m_distance, r_distance);
 
+    /**
+     * Start sending after 500ms since it takes 250ms to calibrate sensors and about 150ms
+     * to trigger and get readings from all three sensors
+     */
     if(count > 5){
         send_sensors_data(l_distance, r_distance, m_distance);
         LE.off(4);
     }
 
-
-    if(l_distance <= 40 && l_distance > 25)
-        LE.toggle(1);
-    else if(l_distance <= 25)
-        LE.on(1);
-    else
-        LE.off(1);
-
-    if(m_distance <= 40 && m_distance > 25)
-        LE.toggle(2);
-    else if(m_distance <= 25)
-        LE.on(2);
-    else
-        LE.off(2);
-
-    if(r_distance <= 40 && r_distance > 25)
-        LE.toggle(3);
-    else if(r_distance <= 25)
-        LE.on(3);
-    else
-        LE.off(3);
+    led_on(l_distance, r_distance, m_distance);
 }
 
 void period_100Hz(uint32_t count)
 {
-    trigger_left_and_right(count, leftSensorTrigger, rightSensorTrigger);
+    trigger_left(count, leftSensorTrigger);
     trigger_middle(count, middleSensorTrigger);
+    trigger_right(count, rightSensorTrigger);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
