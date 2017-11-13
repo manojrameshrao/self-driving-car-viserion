@@ -26,3 +26,4 @@ MSG_ID: 200 	MSG_TYPE: S 	MSG_NAME: MASTER_INITIALIZE
 
 MSG_ID: 301 	MSG_TYPE: S 	MSG_NAME: MOTOR_STATUS
 	SIG_NAME: MOTOR_Send_Speed, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: MOTOR_Send_PWM, STATUS: Invalid Max or Min value., ACTION: Value Set to default

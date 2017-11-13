@@ -12,7 +12,7 @@
 #include "io.hpp"
 
 const uint32_t                             SENSORS_VALUES__MIA_MS  = {10000};
-const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,255};
+const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {5,5,5};
 
 SENSORS_VALUES_t sensor_st = {0};
 
@@ -40,7 +40,7 @@ bool receiveSensorValues(void)
     }
     if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 100))
     {
-        transmit_to_motor(1,0);
+        transmit_to_motor(3,0); // now : slow + straight, prev : brake
         LD.setNumber(19);
     }
     return true;
