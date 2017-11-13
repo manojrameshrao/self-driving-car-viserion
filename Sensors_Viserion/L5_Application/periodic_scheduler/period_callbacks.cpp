@@ -200,13 +200,7 @@ void period_1Hz(uint32_t count)
         CAN_reset_bus(can1);
     }
 
-   can_msg_t canHb;
-   HB_SENSOR_t hb1;
-   hb1.SENSORS_ALIVE = 1;
-   dbc_msg_hdr_t sensorId = dbc_encode_HB_SENSOR(canHb.data.bytes, &hb1);
-   canHb.msg_id = sensorId.mid;
-   canHb.frame_fields.data_len = sensorId.dlc;
-   CAN_tx(can1, &canHb, 0);
+
 }
 
 void period_10Hz(uint32_t count)
@@ -233,6 +227,13 @@ void period_10Hz(uint32_t count)
     printf("left: %d, right: %d, middle: %d\n", left_mode_value, right_mode_value, middle_mode_value);
 //    here maybe can use receive_master_init();
     */
+    can_msg_t canHb;
+    HB_SENSOR_t hb1;
+    hb1.SENSORS_ALIVE = 1;
+    dbc_msg_hdr_t sensorId = dbc_encode_HB_SENSOR(canHb.data.bytes, &hb1);
+    canHb.msg_id = sensorId.mid;
+    canHb.frame_fields.data_len = sensorId.dlc;
+    CAN_tx(can1, &canHb, 0);
 }
 
 void period_100Hz(uint32_t count)
