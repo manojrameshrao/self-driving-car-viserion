@@ -93,7 +93,7 @@ GPIO middleSensorTrigger(P2_8);
 int START = 0, STOP = 0, LEFT_DISTANCE = 0, RIGHT_DISTANCE = 0, MIDDLE_DISTANCE = 0;
 int left_mode_value = 0, right_mode_value = 0, middle_mode_value = 0;
 
-
+/*
 void leftSensorStartISR(void){
     START = sys_get_uptime_us();
 //    LE.on(1);
@@ -137,7 +137,7 @@ void middleSensorStopISR(void){
     sensor = left;
 //    LE.off(3);
 }
-
+*/
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -155,7 +155,7 @@ bool period_init(void)
     CAN_init(can1, 100, 10, 10, NULL, NULL);
     CAN_reset_bus(can1);
     CAN_bypass_filter_accept_all_msgs();
-
+    /*
     leftSensorTrigger.setAsOutput();
     leftSensorTrigger.setLow();
 
@@ -176,7 +176,7 @@ bool period_init(void)
     uint8_t Pin_2_2 = 2;
     eint3_enable_port2(Pin_2_2, eint_rising_edge, middleSensorStartISR);
     eint3_enable_port2(Pin_2_2, eint_falling_edge, middleSensorStopISR);
-
+    */
     return true; // Must return true upon success
 }
 
@@ -196,12 +196,22 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
     if(CAN_is_bus_off(can1))
+    {
         CAN_reset_bus(can1);
+    }
+
+   can_msg_t canHb;
+   HB_SENSOR_t hb1;
+   hb1.SENSORS_ALIVE = 1;
+   dbc_msg_hdr_t sensorId = dbc_encode_HB_SENSOR(canHb.data.bytes, &hb1);
+   canHb.msg_id = sensorId.mid;
+   canHb.frame_fields.data_len = sensorId.dlc;
+   CAN_tx(can1, &canHb, 0);
 }
 
 void period_10Hz(uint32_t count)
 {
-        LE.off(1);
+  /*      LE.off(1);
         LE.off(2);
         LE.off(3);
         LE.off(4);
@@ -222,20 +232,23 @@ void period_10Hz(uint32_t count)
 
     printf("left: %d, right: %d, middle: %d\n", left_mode_value, right_mode_value, middle_mode_value);
 //    here maybe can use receive_master_init();
+    */
 }
 
 void period_100Hz(uint32_t count)
 {
+    /*
     if(count > 500){
         send_sensors_data(left_mode_value, right_mode_value, middle_mode_value);
     }
-
+    */
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
+    /*
     switch(sensor){
 
         case left:
@@ -261,5 +274,5 @@ void period_1000Hz(uint32_t count)
 
         case wait:
             break;
-    }
+    }*/
 }
