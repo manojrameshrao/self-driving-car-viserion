@@ -11,7 +11,8 @@
 //#include "_can_dbc/generated_Viserion.h"
 enum{
     sensor_Data_Id = 101,
-    Motor_Speed_Id = 203
+    Motor_Speed_Id = 203,
+    sensor_Hb_Id = 95
 };
 
 bool receiveSensorValues(void);

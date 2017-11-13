@@ -61,6 +61,11 @@ BO_ 203 MASTER_SPEED: 2 MASTER
  SG_ MASTER_Maintain_Speed : 0|8@1+ (1,0) [0|30] "mph" MOTOR
  SG_ MASTER_Maintain_Direction : 8|8@1+ (1,0) [0|12] "" MOTOR
 
+BO_ 205 MASTER_SEND_VALUES: 3 MASTER
+ SG_ MASTER_left_in : 0|8@1+ (1,0) [0|0] "Inches" SENSORS
+ SG_ MASTER_middle_in : 8|8@1+ (1,0) [0|0] "Inches" SENSORS
+ SG_ MASTER_right_in : 16|8@1+ (1,0) [0|0] "Inches" SENSORS
+
 
 BO_ 301 MOTOR_STATUS: 3 MOTOR
  SG_ MOTOR_Send_Speed : 0|8@1+ (0.1,0) [0|0] "mph" MASTER

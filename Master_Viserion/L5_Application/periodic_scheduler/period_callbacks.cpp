@@ -79,6 +79,7 @@ void period_1Hz(uint32_t count)
     {
         CAN_reset_bus(canbusno);
     }
+    receive_heartbeats(canbusno,1000);
   //  send_heartbeat(canbusno);
 /*
     if(send_heartbeat(canbusno))
@@ -95,7 +96,7 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-  // receive_heartbeats(canbusno,100);
+   //receive_heartbeats(canbusno,100);
    // LE.toggle(2);
 
 }

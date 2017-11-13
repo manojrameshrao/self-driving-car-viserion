@@ -11,8 +11,8 @@
 #include "can.h"
 #include "io.hpp"
 
-const uint32_t                             SENSORS_VALUES__MIA_MS  = {10000};
-const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {5,5,5};
+const uint32_t                             SENSORS_VALUES__MIA_MS  = {2000};
+const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,255};
 
 SENSORS_VALUES_t sensor_st = {0};
 
@@ -33,15 +33,26 @@ bool receiveSensorValues(void)
         {
             case sensor_Data_Id :
                 dbc_decode_SENSORS_VALUES(&sensor_st, can_msg.data.bytes, &msgRx);
-                LE.on(1);
+                LE.set(2, 1);
+       /*         can_msg_t canTx;
+                MASTER_SEND_VALUES_t sendMaster;
+                sendMaster.MASTER_left_in = sensor_st.SENSOR_left_in;
+                sendMaster.MASTER_right_in = sensor_st.SENSOR_right_in;
+                sendMaster.MASTER_middle_in = sensor_st.SENSOR_middle_in;
+                dbc_msg_hdr_t msg1= dbc_encode_MASTER_SEND_VALUES(canTx.data.bytes, &sendMaster);
+                canTx.msg_id = msg1.mid;
+                canTx.frame_fields.data_len = msg1.dlc;
+                CAN_tx(can1, &canTx, 100);
+        */
                 checkSensorValues();
                 break;
         }
     }
-    if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 100))
+    if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 10))
     {
-        transmit_to_motor(3,0); // now : slow + straight, prev : brake
+        //transmit_to_motor(3,0); // now : slow + straight, prev : brake
         LD.setNumber(19);
+        LE.set(2, 0);
     }
     return true;
 }

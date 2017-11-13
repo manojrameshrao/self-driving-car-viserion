@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-const uint32_t                             HB_SENSORS__MIA_MS  = {10000};
+const uint32_t                             HB_SENSORS__MIA_MS  = {2000};
 const HB_SENSORS_t                         HB_SENSORS__MIA_MSG = {0};
 const uint32_t                             HB_MOTORS__MIA_MS  = {10000};
 const HB_MOTORS_t                          HB_MOTORS__MIA_MSG = {0};
@@ -37,17 +37,17 @@ bool receive_heartbeats(can_t canbus,uint32_t mia_inc_time)
 
        switch(rx_hdr.mid)
        {
-           case SENSORS_HB_en: //printf("SR\n");
+          /* case SENSORS_HB_en: //printf("SR\n");
                                dbc_decode_HB_SENSORS(&sensor_hb_msg,hb_rx_msg.data.bytes,&rx_hdr);
                                LE.set(1,1);
-                               LD.setNumber(11);
-                               break;
+                               LD.setNumber(1);
+                               break;*/
            case MOTOR_HB_en:   //printf("MR\n");
                                dbc_decode_HB_MOTORS(&motor_hb_msg,hb_rx_msg.data.bytes,&rx_hdr);
-                               LE.set(2,1);
-                               LD.setNumber(22);
+                               LE.set(3,1);
+                               LD.setNumber(1);
                                break;
-           case GEO_HB_en:     //printf("GR\n");
+         /*  case GEO_HB_en:     //printf("GR\n");
                                dbc_decode_HB_GEO(&geo_hb_msg,hb_rx_msg.data.bytes,&rx_hdr);
                                LE.set(3,1);
                                LD.setNumber(33);
@@ -56,20 +56,22 @@ bool receive_heartbeats(can_t canbus,uint32_t mia_inc_time)
                                dbc_decode_HB_BT(&bt_hb_msg,hb_rx_msg.data.bytes,&rx_hdr);
                                LE.set(4,1);
                                LD.setNumber(44);
-                               break;
+                               break;*/
        }
    }
-
+   /*
    if(dbc_handle_mia_HB_SENSORS(&sensor_hb_msg,mia_inc_time))
    {
        LE.set(1,0);
-       LD.setNumber(10);
-   }
+       LD.setNumber(2);
+   }*/
+
    if(dbc_handle_mia_HB_MOTORS(&motor_hb_msg,mia_inc_time))
    {
-       LE.set(2,0);
-       LD.setNumber(20);
+       LE.set(3,0);
+       LD.setNumber(2);
    }
+   /*
    if(dbc_handle_mia_HB_GEO(&geo_hb_msg,mia_inc_time))
    {
        LD.setNumber(30);
@@ -80,7 +82,7 @@ bool receive_heartbeats(can_t canbus,uint32_t mia_inc_time)
        LE.set(4,0);
        LD.setNumber(40);
    }
-
+   */
    return true; //maybe check for some error conditions?
 }
 
