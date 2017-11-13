@@ -79,7 +79,7 @@ void period_1Hz(uint32_t count)
     {
         CAN_reset_bus(canbusno);
     }
-    send_heartbeat(canbusno);
+  //  send_heartbeat(canbusno);
 /*
     if(send_heartbeat(canbusno))
     {
