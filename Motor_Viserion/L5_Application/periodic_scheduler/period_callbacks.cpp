@@ -34,7 +34,7 @@
 #include "can.h"
 #include <stdio.h>
 #include "_can_dbc/generated_Viserion.h"
-#include <string.h>
+#include <cstring>
 
 #include "dbc_app_send_can_msg.h"
 #include "send_motor_heartbeat.h"
@@ -75,7 +75,8 @@ const float MOTOR_INIT = 18;
 #define CONST_KPH                       0.036
 
 #define STOP_SPEED                      1
-#define SLOW_SPEED                      10 //8
+#define SLOW_SPEED                      7 //8
+#define MEDIUM_SPEED                    10 //8
 
 uint32_t no_of_revolution = 0;
 float value, kph = 0;
@@ -89,6 +90,9 @@ int slow_flag=0;
 float compare_pwm=0;
 volatile uint8_t speed_calc = 1;
 int count_10, count_30, count_50, count_100;
+int count_15, count_16, count_17, count_18, count_23, count_28;
+bool write_flag=false;
+char* acc = "";
 
 uint8_t speed_curr=0;
 uint8_t speed_prev=10;
@@ -96,15 +100,30 @@ uint8_t speed_prev=10;
 uint8_t dir_curr=0;
 uint8_t dir_prev=10;
 
+uint32_t curr_rps=0;
+uint32_t req_rps=0;
+
 //Default values
 static float motor_speed_val = MOTOR_INIT, servo_dir_val = 18;
 static int count_rps, reverse_count = 0;
 GPIO rpm_pin(P2_6);
-char buffer_file[50];
+char buffer_file[150]={0};
 
 char num[5] = { 0 };
 
+int16_t tilt_x,tilt_y;
+int length=0;
+
+int n=0;
 bool flag_checker = false;
+
+typedef enum{
+    uphill,
+    downhill,
+    invalid
+}orientation_t;
+
+orientation_t orient=invalid;
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -120,7 +139,6 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 void count_rpm()
 {
-   // if(speed_calc==1)
     no_of_revolution++;
 }
 
@@ -169,30 +187,104 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    //speed_calc = 0;
     //Calculate speed
     kph = (2 * PI * WHEEL_RADIUS * CONST_KPH * no_of_revolution);
-    sending_speed_kph.MOTOR_Send_Speed=kph;
-    dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
-    no_of_revolution = 0;
-    //LD.setNumber(no_of_revolution);
+
+    //Send speed to Master
+    sending_speed_kph.MOTOR_Send_Speed=no_of_revolution;
+    //dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
+
+
+
+    curr_rps=no_of_revolution;
+
+#if 1
+    if (orient == invalid) {
+        int diff = req_rps - curr_rps;
+        if (diff > 5) motor_speed_val += 0.5;
+        else if (diff > 3.5 && diff<=5) motor_speed_val += 0.3;
+        else if (diff > 1 && diff <=3.5) motor_speed_val += 0.01;
+        else if (diff < 0 && diff >=-2) motor_speed_val -= 0.01;
+        else if (diff <(-2)) motor_speed_val -= 0.05;
+    }
+    else if (orient == uphill) {
+        int diff = req_rps - curr_rps;
+        if (diff > 5) motor_speed_val = 19.3;
+        else if (diff > 3.5 && diff<=5) motor_speed_val += 0.3;
+        else if (diff > 1 && diff <=3.5) motor_speed_val += 0.01;
+        else if (diff < 0 && diff >=-2) motor_speed_val -= 0.01;
+        else if (diff <(-2)) motor_speed_val -= 0.05;
+    }
+    else if (orient == downhill) {
+        int diff = curr_rps - req_rps;
+        if (diff > 8) motor_speed_val = 18.3;
+        else if (diff > 4) motor_speed_val = 18.7;
+        //if (diff > 4) motor_speed_val -= 1;
+        else if (diff > 3.5) motor_speed_val -= 0.3;
+        else if (diff > 1) motor_speed_val -= 0.01;
+        else if (diff < 0) motor_speed_val += 0.005;
+    }
+
+    motor_speed.set(motor_speed_val);
+#endif
+
     if (CAN_is_bus_off(can1)) CAN_reset_bus(can1);
 
+    //Heartbeats
     send_motor_heartbeat();
     receive_heartbeats();
 
-    //speed_calc =1;
+    no_of_revolution = 0;
 }
 void period_10Hz(uint32_t count)
 {
+    //Calculate speed
+/*    no_of_revolution*=10;
+    kph = (2 * PI * WHEEL_RADIUS * CONST_KPH * no_of_revolution);
+
+    //Send speed to Master
+    sending_speed_kph.MOTOR_Send_Speed=no_of_revolution;
+    dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
+
+    curr_rps=no_of_revolution;
+    no_of_revolution = 0;*/
+
+    tilt_x=AS.getX();
+    tilt_y=AS.getY();
+    if(tilt_x>75 && tilt_x>tilt_y){
+        //uphill
+        orient=uphill;
+        LD.setNumber(75);
+    }
+    else if(tilt_x<(-150) && tilt_x<tilt_y){
+        //downhill
+        orient=downhill;
+        LD.setNumber(25);
+    }else{
+        //invalid
+        orient=invalid;
+        LD.setNumber(50);
+    }
+
+    if(SW.getSwitch(1))
+        motor_speed_val=18;
+    else if(SW.getSwitch(2))
+        motor_speed_val=19.3;
+    else if(SW.getSwitch(3))
+            motor_speed_val+=0.1;
+    else if(SW.getSwitch(4))
+            motor_speed_val-=0.1;
+
+    //LD.setNumber(motor_speed_val);
 
 }
 
 void period_100Hz(uint32_t count)
 {
+
+#if 1
     can_msg_t motor_message;
     dbc_msg_hdr_t can_msg_hdr;
-
 
     while (CAN_rx(can1, &motor_message, 0)) {
 
@@ -204,139 +296,141 @@ void period_100Hz(uint32_t count)
 
             speed_curr = speed.MASTER_Maintain_Speed;
 
-            if(speed_prev!=speed_curr){
-            switch (speed_curr) {
-                case 0:
-                    //reverse
-                    if (reverse_count == 5) compare_pwm = MOTOR_INIT;
-                    else if (reverse_count == 10) {
-                        compare_pwm = REVERSE;
-                        reverse_count = 0;
+            if (speed_prev != speed_curr) {
+                switch (speed_curr) {
+                    case 0:
+                        //reverse
+                        if (reverse_count == 5) compare_pwm = MOTOR_INIT;
+                        else if (reverse_count == 10) {
+                            compare_pwm = REVERSE;
+                            reverse_count = 0;
+                        }
+                        reverse_count++;
+                        break;
+                    case 1:
+                        //brakes
+                       // motor_speed_val=BRAKES;
+                        motor_speed.set(motor_speed_val);
+                        req_rps = 0;
+                        LE.toggle(4);
+                        break;
+                     case 2:
+                        //forward slow
+                        slow_flag=1;
+                        req_rps = 8;
+                        break;
+                     case 3:
+                        //fast
+                        req_rps = 8;//good for flat and uphill 12;
+                        break;
+                     case 4:
+                        //turbo
+                        break;
+                     case 5:
+                        //do nothing
+                        break;
+                     default:
+                        break;
+                        //MIA
                     }
-                    reverse_count++;
-                    break;
-                case 1:
-                    //brakes
-                    speed_req = STOP_SPEED;
-                    compare_pwm = BRAKES;
-                    motor_speed.set(compare_pwm);
-                    LE.on(4);
-                    break;
-                case 2:
-                    //forward slow
-                    compare_pwm = FORWARD_SLOW;
-                    speed_req = SLOW_SPEED-1;
-                    slow_flag=1;
-                    //    LE.off(1);
-                    break;
-                case 3:
-                    //fast
-                    compare_pwm = FORWARD_MEDIUM;
-                    speed_req = SLOW_SPEED;
-                    break;
-                case 4:
-                    //turbo
-                    break;
-                case 5:
-                    //do nothing
-                    break;
-                default:
-                    break;
-                    //MIA
+                    speed_prev=speed_curr;
                 }
-            speed_prev=speed_curr;
-            }
 
-            dir_curr=speed.MASTER_Maintain_Direction;
-            if(dir_curr!=dir_prev){
-            switch (dir_curr) {
-                case 0:
-                    //center
-                    servo_dir_val = SERVO_CENTER;
-                    break;
-                case 1:
-                    //hard left 10.9
-                    servo_dir_val = SERVO_HARD_LEFT;
-                    //servo_dir_val = SERVO_SLIGHT_LEFT;
-                    break;
-                case 2:
-                    //slight-left 14.9
-                    servo_dir_val = SERVO_SLIGHT_LEFT;
-                    break;
-                case 3:
-                    //hard right 25
-                    servo_dir_val = SERVO_HARD_RIGHT;
-                    //servo_dir_val = SERVO_SLIGHT_RIGHT;
-                    break;
-                case 4:
-                    //slight right 20.7
-                    servo_dir_val = SERVO_SLIGHT_RIGHT;
-                    break;
-            }
-            dir_prev=dir_curr;
+            dir_curr = speed.MASTER_Maintain_Direction;
+            if (dir_curr != dir_prev) {
+                switch (dir_curr) {
+                    case 0:
+                        //center
+                        servo_dir_val = SERVO_CENTER;
+                        break;
+                    case 1:
+                        //hard left 10.9
+                        servo_dir_val = SERVO_HARD_LEFT;
+                        //servo_dir_val = SERVO_SLIGHT_LEFT;
+                        break;
+                    case 2:
+                        //slight-left 14.9
+                        servo_dir_val = SERVO_SLIGHT_LEFT;
+                        break;
+                    case 3:
+                        //hard right 25
+                        servo_dir_val = SERVO_HARD_RIGHT;
+                        //servo_dir_val = SERVO_SLIGHT_RIGHT;
+                        break;
+                    case 4:
+                        //slight right 20.7
+                        servo_dir_val = SERVO_SLIGHT_RIGHT;
+                        break;
+                }
+                dir_prev = dir_curr;
             }
         }
     }
+#endif
 
-    //compare_pwm = motor_speed_val;
-    motor_speed.set(motor_speed_val);
+#if 0
+    if (orient == invalid) {
+        int diff = req_rps - curr_rps;
+        if (diff > 5) motor_speed_val += 0.0005;
+        else if (diff > 3.5 && diff<=5) motor_speed_val += 0.0003;
+        else if (diff > 1 && diff <=3.5) motor_speed_val += 0.0001;
+        else if (diff < 0 && diff <=1) motor_speed_val -= 0.0001;
+    }
+    else if (orient == uphill) {
+        int diff = req_rps - curr_rps;
+        if (diff > 5) motor_speed_val = 19.3;
+        else if (diff > 3.5 && diff<=5) motor_speed_val += 0.0003;
+        else if (diff > 1 && diff <=3.5) motor_speed_val += 0.0001;
+        else if (diff < 0 && diff <=1) motor_speed_val -= 0.0001;
+    }
+    else if (orient == downhill) {
+        int diff = curr_rps - req_rps;
+        if (diff > 7) motor_speed_val = 18.8;
+        else if (diff > 3.5) motor_speed_val -= 0.0003;
+        else if (diff > 1) motor_speed_val -= 0.0001;
+        else if (diff < 0) motor_speed_val += 0.0001;
+    }
+#endif
+//    motor_speed.set(motor_speed_val);
     motor_dir.set(servo_dir_val);
-    LD.setNumber(kph);
-    count_speed++;
 
-   // motor_speed.set(FORWARD_MEDIUM);
-
-/*    if(SW.getSwitch(1))
-        motor_speed_val=18;
-    else if(SW.getSwitch(2))
-        motor_speed_val=18.5;
-    else if(SW.getSwitch(3))
-        motor_speed_val=19;*/
+    sending_speed_kph.MOTOR_Send_PWM=motor_speed_val;
+    dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
 
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
+
+/*
+ * Initial case : diff = 0, do nothing
+ * first time: diff>5, so increment from 18 to 18.5
+ * */
 void period_1000Hz(uint32_t count)
 {
-    if (speed_req == STOP_SPEED) {
-        motor_speed_val = BRAKES;
-        stop_flag=1;
+#if 0
+    if (orient == invalid) {
+        int diff = req_rps - curr_rps;
+        if (diff > 5) motor_speed_val += 0.0005;
+        else if (diff > 3.5 && diff<=5) motor_speed_val += 0.0003;
+        else if (diff > 1 && diff <=3.5) motor_speed_val += 0.0001;
+        else if (diff < 0 && diff <=1) motor_speed_val -= 0.0001;
     }
-    else if (kph > speed_req) {
-        {
-            /*if(slow_flag==1){
-                motor_speed_val-=0.1;
-            }else{*/
-            motor_speed_val -= 0.04;
-            if (motor_speed_val <= compare_pwm) motor_speed_val = compare_pwm;
-            count_speed = 0;
-        //}
-        }
+    else if (orient == uphill) {
+        int diff = req_rps - curr_rps;
+        if (diff > 5) motor_speed_val = 19.3;
+        else if (diff > 3.5 && diff<=5) motor_speed_val += 0.0003;
+        else if (diff > 1 && diff <=3.5) motor_speed_val += 0.0001;
+        else if (diff < 0 && diff <=1) motor_speed_val -= 0.0001;
     }
-    else if (kph < speed_req) {
-        {
-          /*  if(slow_flag==1){
-                motor_speed_val+=0.1;
-            }else{*/
-            motor_speed_val += 0.03;//0.01
-            if (motor_speed_val > compare_pwm) motor_speed_val = compare_pwm;
-            count_speed = 0;
-            //}
-
-
-        }
-
+    else if (orient == downhill) {
+        int diff = curr_rps - req_rps;
+        if (diff > 7) motor_speed_val = 18.8;
+        else if (diff > 3.5) motor_speed_val -= 0.0003;
+        else if (diff > 1) motor_speed_val -= 0.0001;
+        else if (diff < 0) motor_speed_val += 0.0001;
     }
-
-  /*  if(motor_speed_val>=18.8&& motor_speed_val<19.01)
-                slow_flag=0;*/
-
-    if(stop_flag==1 && speed_req!=STOP_SPEED){
-        motor_speed_val=18.7;
-        stop_flag=2;
-    }
-
+#endif
 }
 
 void logSpeed(float text)
