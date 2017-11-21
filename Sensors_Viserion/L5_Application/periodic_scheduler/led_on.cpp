@@ -15,19 +15,19 @@
  * Turn LED 3 if there is obstacle less or equal then 25in from the middle sensor
  * @l_distance, r_distance, m_distance calculated distances
  */
-void led_on(int &l_distance, int &r_distance, int &m_distance){
+void led_on(int &l_distance, int &m_distance, int &r_distance){
 
-    if(l_distance <= 25)
+    if(l_distance <= 30)
         LE.on(1);
     else
         LE.off(1);
 
-    if(m_distance <= 25)
+    if(m_distance <= 35)
         LE.on(2);
     else
         LE.off(2);
 
-    if(r_distance <= 25)
+    if(r_distance <= 30)
         LE.on(3);
     else
         LE.off(3);

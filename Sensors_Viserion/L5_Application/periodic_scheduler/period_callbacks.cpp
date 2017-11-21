@@ -33,9 +33,10 @@
 #include <periodic_scheduler/send_and_receive/send_sensors_data.h>
 
 #include <periodic_scheduler/init_and_trigger/init_pins.h>
-#include <periodic_scheduler/init_and_trigger/trigger_left.h>
-#include <periodic_scheduler/init_and_trigger/trigger_middle.h>
-#include <periodic_scheduler/init_and_trigger/trigger_right.h>
+#include <periodic_scheduler/init_and_trigger/trigger_sensors.h>
+#include <periodic_scheduler/push_and_pop.h>
+#include <periodic_scheduler/filter.h>
+
 
 #include <stdint.h>
 #include "io.hpp"
@@ -45,10 +46,17 @@
 #include "stdio.h"
 #include "calculate_distance.h"
 #include "led_on.h"
+#include <list>
+
+
+std::list<int> list_left;
+std::list<int> list_middle;
+std::list<int> list_right;
 
 
 /* Calculated distances in inches will be stored here */
 int l_distance = 0, r_distance = 0, m_distance = 0;
+int filtered_left = 0, filtered_right = 0, filtered_middle = 0;
 
 /* Configure three pins P2.6 P2.7 and P2.8 as GPIO */
 GPIO leftSensorTrigger(P2_6);
@@ -100,27 +108,37 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    calculate_distance(l_distance, r_distance, m_distance);
+    filtered_left   = filter(list_left);
+    filtered_middle = filter(list_middle);
+    filtered_right  = filter(list_right);
 
-    printf("Left: %d, Middle: %d, Right: %d \n", l_distance, m_distance, r_distance);
+    printf("Left: %d, Middle: %d, Right: %d \n", filtered_left, filtered_middle, filtered_right);
 
     /**
      * Start sending after 500ms since it takes 250ms to calibrate sensors and about 150ms
      * to trigger and get readings from all three sensors
      */
     if(count > 5){
-        send_sensors_data(l_distance, r_distance, m_distance);
-        LE.off(4);
+        send_sensors_data(filtered_left, filtered_right, filtered_middle);
     }
 
-    led_on(l_distance, r_distance, m_distance);
+    led_on(filtered_left, filtered_middle, filtered_right);
 }
 
 void period_100Hz(uint32_t count)
 {
-    trigger_left(count, leftSensorTrigger);
-    trigger_middle(count, middleSensorTrigger);
-    trigger_right(count, rightSensorTrigger);
+    // 250ms after power up sensor is ready to receive trigger signal
+    if (count > 25){
+
+        trigger_sensors(count, leftSensorTrigger, middleSensorTrigger, rightSensorTrigger);
+
+        if(count % 15 == 0){
+
+            calculate_distance(l_distance, r_distance, m_distance);
+            push_and_pop(list_left, list_middle, list_right, l_distance, m_distance, r_distance);
+        }
+    }
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():

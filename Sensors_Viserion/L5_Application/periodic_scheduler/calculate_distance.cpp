@@ -42,6 +42,15 @@ void calculate_distance(int &l, int &r, int &m){
     l = voltage1 / voltage_scaling;
     r = voltage2 / voltage_scaling;
     m = voltage3 / voltage_scaling;
+
+    /**
+     * Since we noticed that sensors sometimes return values higher than 254 (upper border of sensors range)
+     * there is need to deal with that case. Value 25 is assigned because it is our threshold when master is informing
+     * motor what to do. Value 25 will not change value returned from filter since list is 4 elements long
+     */
+    if(l > 254) l = 25;
+    if(m > 254) m = 25;
+    if(r > 254) r = 25;
 }
 
 
