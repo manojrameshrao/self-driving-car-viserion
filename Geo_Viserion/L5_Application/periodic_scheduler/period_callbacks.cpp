@@ -30,7 +30,7 @@
 #include "printf_lib.h"
 #include <stdint.h>
 #include <stdio.h>
-//#include "io.hpp"
+#include "io.hpp"
 #include "periodic_callback.h"
 #include "can.h"
 //#include "periodic_scheduler/geoHBtx.h"
@@ -38,11 +38,25 @@
 #include "GPS.h"
 #include "compass.hpp"
 #include "generated_Viserion.h"
+#include "uart2.hpp"
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
-
+/* compass variables */
 SEND_COMPASS_HEAD_t compass_pointer;
 dbc_msg_hdr_t encoded_compass_pointer;
+/* GPS variables start
+**/
+
+
+
+char buffer[200]={0};
+char satelite[3];
+
+uint8_t no_sat_locked;
+/* GPS variables end
+*/
+
+
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
  * Minimum 1500 bytes are needed in order to write a debug file if the period tasks overrun.
@@ -68,7 +82,8 @@ bool period_init(void)
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
 
-   // init_GPS_module(); //call to initialize GPS module
+    init_GPS_module(); //call to initialize GPS module
+    satelite[2]='\n';
     return true; // Must return true upon success
 }
 
@@ -105,15 +120,32 @@ void period_10Hz(uint32_t count)
     status = get_compass_head(&compass_head);
     if(status)
     {
-        u0_dbg_printf(" %d \n",compass_head);
+      //  u0_dbg_printf(" %d \n",compass_head);
         compass_pointer.SEND_HEAD = compass_head;
         dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
     else
     {
-       printf("failed to get the compass head \n");
+     //  printf("failed to get the compass head \n");
     }
 
+    GPS_data.gets(buffer,sizeof(buffer),0);
+
+    //u0_dbg_printf("\nb-%s",buffer);
+
+    satelite[0]=buffer[46];
+    satelite[1]=buffer[47];
+    no_sat_locked = atoi(satelite);
+    u0_dbg_printf("%d\n",no_sat_locked);
+    if(no_sat_locked>=3)
+    {
+        LE.on(1);
+    }
+    else
+    {
+        LE.off(1);
+    }
+    LD.setNumber(no_sat_locked);
 }
 
 void period_100Hz(uint32_t count)

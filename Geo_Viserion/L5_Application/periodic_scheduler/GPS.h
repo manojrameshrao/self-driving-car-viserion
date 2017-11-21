@@ -8,7 +8,8 @@
 #ifndef L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_
 #define L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_
 
-
+#include "uart2.hpp"
+extern Uart2& GPS_data;
 void init_GPS_module();
 
 
