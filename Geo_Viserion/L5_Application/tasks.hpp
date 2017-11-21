@@ -34,23 +34,6 @@
 #include "utilities.h"
 #include "uart2.hpp"
 
-Uart2& u2= Uart2::getInstance();
-
-class test : public scheduler_task
-{
-    public:
-        test(uint8_t priority) :
-            scheduler_task("test", 512, priority)
-        {
-            /* Nothing to init */
-
-            u2.init(115200);
-        }
-
-        bool run(void *p);
-
-
-};
 
 
 

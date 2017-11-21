@@ -53,13 +53,13 @@ int main(void)
      * control codes can be learned by typing the "learn" terminal command.
      */
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
-    scheduler_add_task(new test(PRIORITY_HIGH));
+//    scheduler_add_task(new test(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
    // scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 0
+    #if 1
     const bool run_1Khz = false;
     scheduler_add_task(new periodicSchedulerTask(run_1Khz));
     #endif
