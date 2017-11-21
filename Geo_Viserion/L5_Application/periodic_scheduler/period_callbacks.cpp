@@ -27,7 +27,7 @@
  * For example, the 1000Hz take slot runs periodically every 1ms, and whatever you
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
-
+#include "printf_lib.h"
 #include <stdint.h>
 #include <stdio.h>
 //#include "io.hpp"
@@ -99,13 +99,13 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
     bool status = false;
-    int  compass_head = 0;
+    unsigned int  compass_head = 0;
    // LE.toggle(2);
   // receive_heartbeats();
     status = get_compass_head(&compass_head);
     if(status)
     {
-        printf("compass value %d \n",compass_head);
+        u0_dbg_printf(" %d \n",compass_head);
         compass_pointer.SEND_HEAD = compass_head;
         dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }

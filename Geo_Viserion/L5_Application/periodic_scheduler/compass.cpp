@@ -14,7 +14,7 @@
 Uart0 &u0 = Uart0::getInstance();
 Uart2 &u2 = Uart2::getInstance();
 Uart3 &u3 = Uart3::getInstance();
-char str[10] = {0};
+// = {0};
 bool init_compass_serial(UART_CHANNEL UART_INTERFACE,unsigned int uart_baudrate)
 {
     bool rtn = false;
@@ -44,16 +44,16 @@ bool init_compass_serial(UART_CHANNEL UART_INTERFACE,unsigned int uart_baudrate)
  * variable to hold the compass_value[in]: unint16_t compass_header_pointer
  * Returns :True(on success)/false(fail)
  */
-bool get_compass_head(int * compass_head_pointer)
+bool get_compass_head(unsigned int * compass_head_pointer)
 {
     bool rtn = false;
+    char str[10];
     rtn = u3.gets(str,sizeof(str),0);
     //float angle = atoi(str);
   //  printf("called \n");
     if(rtn)
     {
         *compass_head_pointer = atoi(str);
-       // u0_dbg_printf("%d \n", str,angle);
     }
     return rtn;
 }
