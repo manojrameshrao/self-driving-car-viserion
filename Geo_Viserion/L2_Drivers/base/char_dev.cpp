@@ -24,7 +24,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-
+#include "printf_lib.h"
 #include "char_dev.hpp"
 #include "utilities.h"      // system_get_timer_ms();
 
@@ -58,14 +58,17 @@ bool CharDev::gets(char* pBuff, int maxLen, unsigned int timeout)
     bool success = false;
 
     while(getChar(&c, timeout)) {
+    //    u0_dbg_printf("%x \n",c);
         if ('\r' != c && '\n' != c) {
             *pBuff++ = c;
         }
         if(++charCount >= maxLen) {
+            success = true;
             break;
         }
         if('\n' == c) {
             success = true;
+            u0_dbg_printf("in\n");
             break;
         }
     }

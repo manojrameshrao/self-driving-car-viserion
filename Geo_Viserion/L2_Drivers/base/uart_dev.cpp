@@ -246,7 +246,8 @@ bool UartDev::init(unsigned int pclk, unsigned int baudRate,
     setBaudRate(baudRate);
 
     // Set minimum queue size?
-    if (rxQSize < 9) rxQSize = 8;
+    //if (rxQSize < 9) rxQSize = 8;
+    if (rxQSize < 9) rxQSize = 6;
     if (txQSize < 9) txQSize = 8;
 
     // Create the receive and transmit queues
