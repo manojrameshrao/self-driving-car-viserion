@@ -44,15 +44,16 @@ bool init_compass_serial(UART_CHANNEL UART_INTERFACE,unsigned int uart_baudrate)
  * variable to hold the compass_value[in]: unint16_t compass_header_pointer
  * Returns :True(on success)/false(fail)
  */
-bool get_compass_head(float * compass_head_pointer)
+bool get_compass_head(int * compass_head_pointer)
 {
     bool rtn = false;
     rtn = u3.gets(str,sizeof(str),0);
-    float angle = atof(str);
+    //float angle = atoi(str);
   //  printf("called \n");
     if(rtn)
     {
-        u0_dbg_printf("%s , %f\n", str,angle);
+        *compass_head_pointer = atoi(str);
+       // u0_dbg_printf("%d \n", str,angle);
     }
     return rtn;
 }

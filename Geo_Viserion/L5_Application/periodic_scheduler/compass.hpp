@@ -20,7 +20,7 @@ UART_CHANNEL;
 
 
 bool init_compass_serial(UART_CHANNEL UART_INTEFACE, unsigned int uart_baudrate);
-bool get_compass_head( char * compass_head_pointer);
+bool get_compass_head( int * compass_head);
 bool debug_compass_head(uint16_t compass_head_pointer);
 
 

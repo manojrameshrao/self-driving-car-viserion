@@ -37,9 +37,12 @@
 //#include "periodic_scheduler/geoHBrx.h"
 #include "GPS.h"
 #include "compass.hpp"
+#include "generated_Viserion.h"
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
+SEND_COMPASS_HEAD_t compass_pointer;
+dbc_msg_hdr_t encoded_compass_pointer;
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
  * Minimum 1500 bytes are needed in order to write a debug file if the period tasks overrun.
@@ -61,9 +64,9 @@ bool period_init(void)
       {
           printf("compass serial interface not initialized \n");
       }
-//    CAN_init(can1, 100, 10, 10, NULL, NULL);
-//    CAN_bypass_filter_accept_all_msgs();
-//    CAN_reset_bus(can1);
+    CAN_init(can1, 100, 10, 10, NULL, NULL);
+    CAN_bypass_filter_accept_all_msgs();
+    CAN_reset_bus(can1);
 
    // init_GPS_module(); //call to initialize GPS module
     return true; // Must return true upon success
@@ -85,24 +88,26 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
     //LE.toggle(1);
-//    if(CAN_is_bus_off(can1))
-//    {
-//      //printf("Can bus is off\n");
-//            CAN_reset_bus(can1);
-//    }
+    if(CAN_is_bus_off(can1))
+    {
+      //printf("Can bus is off\n");
+            CAN_reset_bus(can1);
+    }
    // geo_heartbeat();
 }
 
 void period_10Hz(uint32_t count)
 {
     bool status = false;
-    char  compass_head[10] = {0};
+    int  compass_head = 0;
    // LE.toggle(2);
   // receive_heartbeats();
-    status = get_compass_head(compass_head);
+    status = get_compass_head(&compass_head);
     if(status)
     {
-        printf("compass value %s \n",compass_head);
+        printf("compass value %d \n",compass_head);
+        compass_pointer.SEND_HEAD = compass_head;
+        dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
     else
     {
