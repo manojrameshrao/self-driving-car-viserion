@@ -136,7 +136,7 @@ void period_10Hz(uint32_t count)
 
     bool status = false;
     unsigned int  compass_head = 0;
-    unsigned int  history_compass_head =0;
+    static unsigned int  history_compass_head =0;
 
   // receive_heartbeats();
     status = get_compass_head(&compass_head);
@@ -144,16 +144,18 @@ void period_10Hz(uint32_t count)
     {
         LE.toggle(2);
         history_compass_head = compass_head;
-        u0_dbg_printf("compass_head %d \n",compass_head);
+      //  u0_dbg_printf("compass_head %d \n",compass_head);
         compass_pointer.SEND_HEAD = compass_head;
         dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
     else
     {
         LE.toggle(3);
+      //  u0_dbg_printf("history_compass_head %d \n",history_compass_head);
      //  printf("failed to get the compass head \n");
-      // compass_pointer.SEND_HEAD = history_compass_head;
-      // dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
+       compass_pointer.SEND_HEAD = history_compass_head;
+      /*  compass_pointer.SEND_HEAD = 217; */
+       dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
 }
 
