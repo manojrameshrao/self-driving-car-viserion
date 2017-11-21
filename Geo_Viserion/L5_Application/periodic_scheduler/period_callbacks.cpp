@@ -108,26 +108,13 @@ void period_1Hz(uint32_t count)
       //printf("Can bus is off\n");
             CAN_reset_bus(can1);
     }
+
    // geo_heartbeat();
 }
 
 void period_10Hz(uint32_t count)
 {
-    bool status = false;
-    unsigned int  compass_head = 0;
-   // LE.toggle(2);
-  // receive_heartbeats();
-    status = get_compass_head(&compass_head);
-    if(status)
-    {
-      //  u0_dbg_printf(" %d \n",compass_head);
-        compass_pointer.SEND_HEAD = compass_head;
-        dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
-    }
-    else
-    {
-     //  printf("failed to get the compass head \n");
-    }
+
 
     GPS_data.gets(buffer,sizeof(buffer),0);
 
@@ -136,7 +123,7 @@ void period_10Hz(uint32_t count)
     satelite[0]=buffer[46];
     satelite[1]=buffer[47];
     no_sat_locked = atoi(satelite);
-    u0_dbg_printf("%d\n",no_sat_locked);
+   // u0_dbg_printf("%d\n",no_sat_locked);
     if(no_sat_locked>=3)
     {
         LE.on(1);
@@ -146,6 +133,28 @@ void period_10Hz(uint32_t count)
         LE.off(1);
     }
     LD.setNumber(no_sat_locked);
+
+    bool status = false;
+    unsigned int  compass_head = 0;
+    unsigned int  history_compass_head =0;
+
+  // receive_heartbeats();
+    status = get_compass_head(&compass_head);
+    if(status)
+    {
+        LE.toggle(2);
+        history_compass_head = compass_head;
+        u0_dbg_printf("compass_head %d \n",compass_head);
+        compass_pointer.SEND_HEAD = compass_head;
+        dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
+    }
+    else
+    {
+        LE.toggle(3);
+     //  printf("failed to get the compass head \n");
+      // compass_pointer.SEND_HEAD = history_compass_head;
+      // dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
+    }
 }
 
 void period_100Hz(uint32_t count)
