@@ -108,21 +108,7 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    filtered_left   = filter(list_left);
-    filtered_middle = filter(list_middle);
-    filtered_right  = filter(list_right);
-
     printf("Left: %d, Middle: %d, Right: %d \n", filtered_left, filtered_middle, filtered_right);
-
-    /**
-     * Start sending after 500ms since it takes 250ms to calibrate sensors and about 150ms
-     * to trigger and get readings from all three sensors
-     */
-    if(count > 5){
-        send_sensors_data(filtered_left, filtered_right, filtered_middle);
-    }
-
-    led_on(filtered_left, filtered_middle, filtered_right);
 }
 
 void period_100Hz(uint32_t count)
@@ -131,14 +117,16 @@ void period_100Hz(uint32_t count)
     if (count > 25){
 
         trigger_sensors(count, leftSensorTrigger, middleSensorTrigger, rightSensorTrigger);
+        calculate_distance(l_distance, r_distance, m_distance);
+        push_and_pop(list_left, list_middle, list_right, l_distance, m_distance, r_distance);
 
-        if(count % 15 == 0){
+        filtered_left   = filter(list_left);
+        filtered_middle = filter(list_middle);
+        filtered_right  = filter(list_right);
 
-            calculate_distance(l_distance, r_distance, m_distance);
-            push_and_pop(list_left, list_middle, list_right, l_distance, m_distance, r_distance);
-        }
+        led_on(filtered_left, filtered_middle, filtered_right);
+        send_sensors_data(filtered_left, filtered_right, filtered_middle);
     }
-
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
