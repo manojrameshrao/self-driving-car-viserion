@@ -15,7 +15,7 @@
  * Turn LED 3 if there is obstacle less or equal then 25in from the middle sensor
  * @l_distance, r_distance, m_distance calculated distances
  */
-void led_on(int &l_distance, int &m_distance, int &r_distance){
+void led_on(int &l_distance, int &m_distance, int &r_distance, int &b_distance){
 
     if(l_distance <= 30)
         LE.on(1);
@@ -32,6 +32,10 @@ void led_on(int &l_distance, int &m_distance, int &r_distance){
     else
         LE.off(3);
 
+    if(b_distance <= 30)
+        LE.on(4);
+    else
+        LE.off(4);
 
     /**
      * this is to be used only if want additional indicator

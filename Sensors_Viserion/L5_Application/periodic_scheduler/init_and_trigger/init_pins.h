@@ -10,7 +10,7 @@
 
 #include "gpio.hpp"
 
-void init_pins(GPIO &l_trigger, GPIO &r_trigger, GPIO &m_trigger);
+void init_pins(GPIO &l_trigger, GPIO &r_trigger, GPIO &m_trigger, GPIO &b_trigger);
 
 
 #endif /* INIT_PINS_H_ */

@@ -48,20 +48,38 @@
 #include "led_on.h"
 #include <list>
 
+#include "eint.h"
+
 
 std::list<int> list_left;
 std::list<int> list_middle;
 std::list<int> list_right;
+std::list<int> list_back;
 
 
 /* Calculated distances in inches will be stored here */
-int l_distance = 0, r_distance = 0, m_distance = 0;
-int filtered_left = 0, filtered_right = 0, filtered_middle = 0;
+int l_distance = 0, r_distance = 0, m_distance = 0, b_distance = 0;
+int filtered_left = 0, filtered_right = 0, filtered_middle = 0, filtered_back = 0;
+int back_START = 0, back_STOP = 0, back_DISTANCE = 0;
 
 /* Configure three pins P2.6 P2.7 and P2.8 as GPIO */
 GPIO leftSensorTrigger(P2_6);
 GPIO rightSensorTrigger(P2_7);
 GPIO middleSensorTrigger(P2_8);
+GPIO backSensorTrigger(P2_9);
+
+
+void backSensorStartISR(void){
+    back_START = sys_get_uptime_us();
+}
+
+void backSensorStopISR(void){
+    back_STOP = sys_get_uptime_us();
+    back_DISTANCE = (back_STOP - back_START) / 147;
+    list_back.push_front(back_DISTANCE);
+    if(list_back.size() > 3)
+        list_back.pop_back();
+}
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -82,7 +100,11 @@ bool period_init(void)
     CAN_reset_bus(can1);
     CAN_bypass_filter_accept_all_msgs();
 
-    init_pins(leftSensorTrigger, rightSensorTrigger, middleSensorTrigger);
+    init_pins(leftSensorTrigger, rightSensorTrigger, middleSensorTrigger, backSensorTrigger);
+
+    eint3_enable_port2(0, eint_rising_edge, backSensorStartISR);
+    eint3_enable_port2(0, eint_falling_edge, backSensorStopISR);
+
 
     return true; // Must return true upon success
 }
@@ -108,7 +130,8 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    printf("Left: %d, Middle: %d, Right: %d \n", filtered_left, filtered_middle, filtered_right);
+
+    printf("Left: %d, Middle: %d, Right: %d Back: %d \n", filtered_left, filtered_middle, filtered_right, filtered_back);
 }
 
 void period_100Hz(uint32_t count)
@@ -116,16 +139,17 @@ void period_100Hz(uint32_t count)
     // 250ms after power up sensor is ready to receive trigger signal
     if (count > 25){
 
-        trigger_sensors(count, leftSensorTrigger, middleSensorTrigger, rightSensorTrigger);
+        trigger_sensors(count, leftSensorTrigger, middleSensorTrigger, rightSensorTrigger, backSensorTrigger);
         calculate_distance(l_distance, r_distance, m_distance);
         push_and_pop(list_left, list_middle, list_right, l_distance, m_distance, r_distance);
 
         filtered_left   = filter(list_left);
         filtered_middle = filter(list_middle);
         filtered_right  = filter(list_right);
+        filtered_back  = filter(list_back);
 
-        led_on(filtered_left, filtered_middle, filtered_right);
-        send_sensors_data(filtered_left, filtered_right, filtered_middle);
+        led_on(filtered_left, filtered_middle, filtered_right, filtered_back);
+        send_sensors_data(filtered_left, filtered_right, filtered_middle, filtered_back);
     }
 }
 

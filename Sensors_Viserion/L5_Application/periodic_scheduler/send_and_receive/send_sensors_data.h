@@ -9,7 +9,7 @@
 #define SEND_SENSORS_DATA_H_
 
 
-void send_sensors_data(int left, int right, int middle);
+void send_sensors_data(int left, int right, int middle, int back);
 
 
 #endif /* SEND_SENSORS_DATA_H_ */

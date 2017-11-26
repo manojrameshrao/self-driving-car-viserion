@@ -11,7 +11,7 @@
 #include "gpio.hpp"
 
 
-void trigger_sensors(uint32_t const &count, GPIO &l_trigger, GPIO &m_trigger, GPIO &r_trigger);
+void trigger_sensors(uint32_t const &count, GPIO &l_trigger, GPIO &m_trigger, GPIO &r_trigger, GPIO &b_trigger);
 
 
 #endif /* TRIGGER_SENSORS_H_ */
