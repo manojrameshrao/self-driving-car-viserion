@@ -1,0 +1,38 @@
+Conversion Warnings Log
+
+
+MSG_ID: 95 	MSG_TYPE: S 	MSG_NAME: HB_SENSORS
+	SIG_NAME: SENSOR_ALIVE, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 96 	MSG_TYPE: S 	MSG_NAME: HB_MOTORS
+	SIG_NAME: MOTOR_ALIVE, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 97 	MSG_TYPE: S 	MSG_NAME: HB_GEO
+	SIG_NAME: GEO_ALIVE, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 98 	MSG_TYPE: S 	MSG_NAME: HB_BT
+	SIG_NAME: BT_ALIVE, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 99 	MSG_TYPE: S 	MSG_NAME: HB_MASTER
+	SIG_NAME: MASTER_ALIVE, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 100 	MSG_TYPE: S 	MSG_NAME: SENSOR_CRITICAL
+	SIG_NAME: SENSOR_Stop_Motor, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 101 	MSG_TYPE: S 	MSG_NAME: SENSOR_VALUES
+	SIG_NAME: SENSOR_Send_Rawvalues, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 200 	MSG_TYPE: S 	MSG_NAME: MASTER_INITIALIZE
+	SIG_NAME: MASTER_Init_Boards, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 201 	MSG_TYPE: S 	MSG_NAME: MASTER_CURRENT_DIRECTION
+	SIG_NAME: MASTER_Get_Direction, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 202 	MSG_TYPE: S 	MSG_NAME: MASTER_CURRENT_COORDINATES
+	SIG_NAME: MASTER_Get_COORDINATES, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 301 	MSG_TYPE: S 	MSG_NAME: MOTOR_STATUS
+	SIG_NAME: MOTOR_Send_Speed, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 500 	MSG_TYPE: S 	MSG_NAME: GET_START_COORDINATES
+	SIG_NAME: GET_COORDINATES, STATUS: Invalid Max or Min value., ACTION: Value Set to default

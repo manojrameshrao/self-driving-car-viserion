@@ -42,12 +42,12 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <string.h>
-
-
+#include "bluetoothreceive.h"
+#include "bluetoothtransmission.h"
+#include "sendoncan.h"
+#include "receivefromcan.h"
 using namespace std;
 
-Uart3& u3=Uart3::getInstance();
-char temp[21];
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -59,6 +59,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
  * printf inside these functions, you need about 1500 bytes minimum
  */
 const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
+Uart3& u3=Uart3::getInstance();
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -66,7 +67,7 @@ bool period_init(void)
 	CAN_init(can1, 100, 5, 5, NULL, NULL);
 	CAN_reset_bus(can1);
 	CAN_bypass_filter_accept_all_msgs();
-	u3.init(9600);
+	bluetoothreceiveinit(u3);
 	return true; // Must return true upon success
 }
 
@@ -99,29 +100,13 @@ void period_10Hz(uint32_t count)
 
 }
 
-string coordinates;
-double latti=0;
-double longi=0;
-char *latt;
-char *longii;
 
 void period_100Hz(uint32_t count)
 {
-	if(u3.getRxQueueSize()>=21)
-	{
-		u3.gets(temp,21,0);
-		coordinates = temp;
 
-		latt=strtok(temp,",");
-		longii=strtok(NULL,",");
-		latti=strtod(latt,NULL);
-		longi=strtod(longii,NULL);
-
-		printf("%f %f\n",latti,longi);
-
-
-		LE.toggle(1);
-	}
+	receiveAllCoordinates(u3);
+	 recieve_cmd_from_bluetooth(u3);
+	receiveallcanmsges(u3);
 
 }
 
