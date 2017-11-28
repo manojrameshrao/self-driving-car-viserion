@@ -1,0 +1,129 @@
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="1">
+
+        <Button
+            android:id="@+id/StatsOfCar"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="199dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:onClick="statinfo"
+            android:text="Stats" />
+
+        <Button
+            android:id="@+id/ReceiveData"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="recieve_car_cordinates"
+            android:text="Receive Car Location" />
+
+    </LinearLayout>
+  <!--  <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/linearLayout"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="93dp">
+-->
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map"
+    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:layout_width="match_parent"
+    android:layout_height="340dp"
+    tools:context="com.example.pratap.viserion.MapsActivity"
+        android:layout_above="@+id/Change_dst"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/start_car" />
+
+<!--
+
+    </LinearLayout>
+-->
+
+    <Button
+        android:id="@+id/Change_dst"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="change_destination"
+        android:text="Change Dst"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:id="@+id/Send_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/Change_dst"
+        android:layout_toEndOf="@+id/Change_dst"
+        android:onClick="send_coordinates"
+        android:clickable="false"
+        android:text="Send Co-ordinates"
+        android:layout_toRightOf="@+id/Change_dst" />
+
+    <TextView
+        android:id="@+id/dataidstr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/linearLayout"
+        android:hint="Data"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/start_car"
+        android:layout_width="199dp"
+        android:layout_height="wrap_content"
+        android:text="DRIVE"
+        android:onClick="startcar"
+        android:layout_alignBottom="@+id/stop_car"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:id="@+id/stop_car"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="stopcar"
+        android:text="ABORT"
+        android:layout_below="@+id/dataidstr"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/start_car"
+        android:layout_toRightOf="@+id/start_car" />
+
+    <android.support.v7.widget.SwitchCompat
+        android:id="@+id/connect_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BT"
+        android:theme="@style/connectionswitch"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/dataidstr" />
+
+
+</RelativeLayout>
