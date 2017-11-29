@@ -1,9 +1,3 @@
-/*
- * sendcoordinatesdata.cpp
- *
- *  Created on: Nov 17, 2017
- *      Author: dheem
- */
 
 #include <periodic_scheduler/sendcoordinatesdata.h>
 #include "generated_Viserion.h"

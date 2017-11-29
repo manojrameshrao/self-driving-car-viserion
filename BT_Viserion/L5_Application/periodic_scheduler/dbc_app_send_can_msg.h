@@ -1,9 +1,3 @@
-/*
- * dbc_app_send_can_msg.h
- *
- *  Created on: 24-Oct-2017
- *      Author: pratap
- */
 
 #ifndef L5_APPLICATION_PERIODIC_SCHEDULER_DBC_APP_SEND_CAN_MSG_H_
 #define L5_APPLICATION_PERIODIC_SCHEDULER_DBC_APP_SEND_CAN_MSG_H_

@@ -1,10 +1,3 @@
-/*
- * bluetoothreceive.c
- *
- *  Created on: 27-Nov-2017
- *      Author: pratap
- */
-
 #include "bluetoothreceive.h"
 #include <stdint.h>
 #include "io.hpp"
@@ -36,15 +29,16 @@ static char stats[]="STATS";
 static char sstat[]="SSTAT";
 static char start[]="START";
 static char stop[]="VSTOP";
-bool stat = 0;
 
 
 void bluetoothreceiveinit(Uart3& u3)
 {
+
 u3.init(9600);
 }
-
-void recieve_cmd_from_bluetooth(Uart3& u3)
+bool stat;
+char send[]="L37.338623, -121.879734";
+bool recieve_cmd_from_bluetooth(Uart3& u3)
 {
 
 	if(u3.getRxQueueSize()==5)
@@ -58,6 +52,7 @@ void recieve_cmd_from_bluetooth(Uart3& u3)
 		if(strcmp(temp, point) == 0)
 		{
 			//send can msg to geo asking for coordinates
+			u3.putline(send,portMAX_DELAY);
 		}
 
 		else if(strcmp(temp,stats) == 0)
@@ -85,6 +80,7 @@ void recieve_cmd_from_bluetooth(Uart3& u3)
 		}
 	}
 
+	return stat;
 }
 
 void receiveAllCoordinates(Uart3& u3){
@@ -104,6 +100,8 @@ void receiveAllCoordinates(Uart3& u3){
 
 		latti=strtod(latt,NULL);
 		longi=strtod(longii,NULL);
+
+
 		sendAllCordinates(latti,longi);
 
 		//points.set_lattitude(latti);

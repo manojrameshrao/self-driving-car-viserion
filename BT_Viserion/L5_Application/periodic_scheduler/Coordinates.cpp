@@ -1,10 +1,3 @@
-/*
- * Coordinates.cpp
- *
- *  Created on: Nov 3, 2017
- *      Author: dheem
- */
-
 #include <periodic_scheduler/Coordinates.h>
 
 Coordinates::Coordinates() {

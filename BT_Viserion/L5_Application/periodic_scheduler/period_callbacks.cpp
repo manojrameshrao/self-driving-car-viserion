@@ -84,13 +84,15 @@ bool period_reg_tlm(void)
  * The argument 'count' is the number of times each periodic task is called.
  */
 
+bool stats;
+
 void period_1Hz(uint32_t count)
 {
 	if(CAN_is_bus_off(can1))
 	{
 		CAN_reset_bus(can1);
 	}
-	send_bluetooth_hartbeat();
+	send_bluetooth_hertbeat();
 
 }
 
@@ -98,15 +100,16 @@ void period_10Hz(uint32_t count)
 {
 	receive_heartbeats();
 
+
 }
 
 
 void period_100Hz(uint32_t count)
 {
-
+	++count;
 	receiveAllCoordinates(u3);
-	 recieve_cmd_from_bluetooth(u3);
-	receiveallcanmsges(u3);
+	stats=recieve_cmd_from_bluetooth(u3);
+	receiveallcanmsges(u3,stats);
 
 }
 

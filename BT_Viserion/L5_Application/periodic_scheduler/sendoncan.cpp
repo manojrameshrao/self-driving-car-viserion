@@ -1,13 +1,3 @@
-/*
- * sendoncan.cpp
- *
- *  Created on: 27-Nov-2017
- *      Author: pratap
- */
-
-
-
-
 #include "sendoncan.h"
 #include "can.h"
 #include "_can_dbc/generated_Viserion.h"
@@ -30,8 +20,8 @@ void sendStartCoordinate(){
 
 void sendAllCordinates(double latti,double longi){
 
-	coordinate.SET_LATTITUDE = latti; //recieve[size].get_lattitude();
-	coordinate.SET_LONGITUDE = longi;  //recieve[size].get_longitude();
+	coordinate.SET_LATTITUDE = latti;
+	coordinate.SET_LONGITUDE = longi;
      printf("s /n");
 	if(dbc_encode_and_send_GET_ROUTE_COORDINATES(&coordinate))
 		LE.toggle(2);
