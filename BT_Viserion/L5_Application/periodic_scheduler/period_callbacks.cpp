@@ -92,7 +92,7 @@ void period_1Hz(uint32_t count)
 	{
 		CAN_reset_bus(can1);
 	}
-	send_bluetooth_hertbeat();
+	//send_bluetooth_hertbeat();
 
 }
 

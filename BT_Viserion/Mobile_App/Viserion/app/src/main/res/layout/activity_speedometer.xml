@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.pratap.viserion.speedometer">
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <RelativeLayout
+            android:id="@+id/test_layout"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/speed_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/button_centre"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignStart="@+id/button_centre"
+                android:layout_below="@+id/textView4"
+                android:layout_toEndOf="@+id/speed_text"
+                android:layout_toRightOf="@+id/speed_text"
+                android:gravity="center_vertical"
+                android:text="0.000 mph"
+                android:textAlignment="center"
+                android:textColor="@android:color/black"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/speed_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textView4"
+                android:gravity="center_vertical"
+                android:text="SPEED"
+                android:textAlignment="center"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="36sp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/button_centre"
+                android:layout_toStartOf="@+id/button_centre" />
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:background="@color/common_google_signin_btn_text_light_disabled"
+                android:gravity="center_vertical"
+                android:text=" VISERION STATS"
+                android:textAlignment="center"
+                android:textColor="?android:attr/actionMenuTextColor"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/direction_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/direction_text"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignTop="@+id/direction_text"
+                android:layout_toEndOf="@+id/direction_text"
+                android:layout_toRightOf="@+id/direction_text"
+                android:gravity="center_vertical"
+                android:text="0.0º"
+                android:textAlignment="center"
+                android:textColor="@android:color/black"
+                android:textSize="30sp" />
+
+
+
+
+            <ImageView
+                android:layout_width="500dp"
+                android:layout_height="500dp"
+                android:src="@drawable/vis_car"
+                android:id="@+id/imageView"
+                android:layout_marginTop="7dp"
+                android:layout_below="@+id/image_compass"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
+
+            <Button
+                android:id="@+id/button_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                android:enabled="false"
+                android:rotation="-30"
+                android:text="LEFT"
+                android:visibility="invisible"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true" />
+
+            <Button
+                android:id="@+id/button_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:background="@color/colorPrimaryDark"
+                android:enabled="false"
+                android:rotation="30"
+                android:text="RIGHT"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/button_dummy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                android:clickable="false"
+                android:enabled="true"
+                android:text="Dummy"
+                android:visibility="invisible"
+                android:layout_below="@+id/image_compass"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginTop="34dp" />
+
+            <Button
+                android:id="@+id/button_centre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:background="@color/colorPrimaryDark"
+                android:enabled="false"
+                android:text="CENTRE"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/button_rear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                android:clickable="false"
+                android:enabled="true"
+                android:text="REAR"
+                android:visibility="invisible"
+                android:layout_marginLeft="53dp"
+                android:layout_marginStart="53dp"
+                android:layout_alignTop="@+id/button_dummy"
+                android:layout_toRightOf="@+id/button_dummy"
+                android:layout_toEndOf="@+id/button_dummy"
+                android:layout_marginTop="25dp" />
+
+
+            <ImageView
+                android:layout_width="500dp"
+                android:layout_height="500dp"
+                android:background="@drawable/img_direction"
+                android:id="@+id/image_compass_dir"
+                android:maxHeight="55dp"
+                android:maxWidth="55dp"
+                android:layout_below="@+id/direction_text"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"/>
+
+            <ImageView
+                android:layout_width="500dp"
+                android:layout_height="500dp"
+                android:src="@drawable/carcompass"
+                android:id="@+id/image_compass"
+                android:maxHeight="50dp"
+                android:maxWidth="50dp"
+                android:layout_below="@+id/direction_view"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
+
+            <TextView
+                android:id="@+id/direction_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DIRECTION"
+                android:textAlignment="center"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="36sp"
+                android:layout_below="@+id/speed_text"
+                android:layout_alignLeft="@+id/image_compass"
+                android:layout_alignStart="@+id/image_compass" />
+
+        </RelativeLayout>
+    </ScrollView>
+
+</RelativeLayout>
