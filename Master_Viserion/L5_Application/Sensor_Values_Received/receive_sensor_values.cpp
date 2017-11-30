@@ -17,10 +17,10 @@ const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,25
 
 SENSORS_VALUES_t sensor_st = {0};
 
-#define CORNER_DIST 30
-#define MIDDLE_DIST 35
-#define MIN_MIDDLE_DIST 20//10
-#define MIN_CORNER_DIST 15//10
+#define CORNER_DIST 30  //25 - Previous Commit Values
+#define MIDDLE_DIST 35 //25 - Previous Commit Values
+#define MIN_MIDDLE_DIST 10
+#define MIN_CORNER_DIST 15
 
 bool receiveSensorValues(void)
 {
