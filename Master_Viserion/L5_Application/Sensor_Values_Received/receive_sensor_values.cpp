@@ -7,6 +7,7 @@
 
 #include "Sensor_Values_Received/receive_sensor_values.h"
 #include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
+#include <Periodic_Hearbeats/receive_heartbeats.h>
 #include "_can_dbc/generated_Viserion.h"
 #include "can.h"
 #include "io.hpp"
@@ -16,8 +17,8 @@ const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,25
 
 SENSORS_VALUES_t sensor_st = {0};
 
-#define CORNER_DIST 30//25 //15 25
-#define MIDDLE_DIST 35//25//20  25
+#define CORNER_DIST 30
+#define MIDDLE_DIST 35
 #define MIN_MIDDLE_DIST 20//10
 #define MIN_CORNER_DIST 15//10
 

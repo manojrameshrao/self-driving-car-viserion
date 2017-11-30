@@ -10,9 +10,10 @@
 
 //For Message Ids
 enum{
-    sensor_Data_Id = 101,
+    Sensor_Data_Id = 101,
     Motor_Speed_Id = 203,
-    sensor_Hb_Id = 95
+    Geo_Receive_Start_Coordinates = 405//,
+    //Bt_Receive_Start_Coordinates = 503
 };
 
 //For Speed
