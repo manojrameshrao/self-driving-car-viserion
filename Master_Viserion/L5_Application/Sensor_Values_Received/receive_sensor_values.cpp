@@ -34,28 +34,19 @@ bool receiveSensorValues(void)
             case sensor_Data_Id :
                 dbc_decode_SENSORS_VALUES(&sensor_st, can_msg.data.bytes, &msgRx);
                 LE.set(2, 1);
-       /*         can_msg_t canTx;
-                MASTER_SEND_VALUES_t sendMaster;
-                sendMaster.MASTER_left_in = sensor_st.SENSOR_left_in;
-                sendMaster.MASTER_right_in = sensor_st.SENSOR_right_in;
-                sendMaster.MASTER_middle_in = sensor_st.SENSOR_middle_in;
-                dbc_msg_hdr_t msg1= dbc_encode_MASTER_SEND_VALUES(canTx.data.bytes, &sendMaster);
-                canTx.msg_id = msg1.mid;
-                canTx.frame_fields.data_len = msg1.dlc;
-                CAN_tx(can1, &canTx, 100);
-        */
                 checkSensorValues();
                 break;
         }
     }
     if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 10))
     {
-        //transmit_to_motor(3,0); // now : slow + straight, prev : brake
+        //transmit_to_motor(3,0); //should be brake
         LD.setNumber(19);
         LE.set(2, 0);
     }
     return true;
 }
+
 bool checkSensorValues()
 {
     uint8_t speed = 0;
@@ -63,72 +54,72 @@ bool checkSensorValues()
     if(sensor_st.SENSOR_middle_in <= MIN_MIDDLE_DIST) //if middle : 0 to 10
     {
         LD.setNumber(5);
-        speed = 1; //break
-        direction = 0; // straight
+        speed = brake; //1
+        direction = straight; //0
     }
     else if(sensor_st.SENSOR_middle_in > MIN_MIDDLE_DIST && sensor_st.SENSOR_middle_in <= MIDDLE_DIST) //middle detected 11 - 25
     {
         if(sensor_st.SENSOR_left_in <= CORNER_DIST && sensor_st.SENSOR_right_in <= CORNER_DIST )
         {
             //left(0-25) + middle(11 - 25) + right(0-25)
-            LD.setNumber(50);
-            speed = 1; //prev : brake, now : reverse
-            direction = 0; //straight
+            LD.setNumber(60);
+            speed = brake; // 1
+            direction = straight; //0
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST) // right(0 - 25) + middle(11 - 25)
         {
             LD.setNumber(70);
-            speed = 2; //slow
-            direction = 1; //full left
+            speed = slow; //2
+            direction = full_left; //1
         }
         else if(sensor_st.SENSOR_left_in <= CORNER_DIST)  //left(0 - 25) + middle (11 -25)
         {
-            LD.setNumber(60);
-            speed = 2; //slow
-            direction = 3; //full right
+            LD.setNumber(50);
+            speed = slow; //2
+            direction = full_right; //3
         }
         else //middle(11 - 25)
         {
             LD.setNumber(20);
-            speed = 2; //slow
-            direction = 2; // now : slight left prev :straight
+            speed = slow; //slow, 2
+            direction = slight_left; //2
         }
     }
     else // (middle > 25)
     {
        /*if(sensor_st.SENSOR_left_in <= MIN_CORNER_DIST && sensor_st.SENSOR_right_in <= MIN_CORNER_DIST)
         {
-            //LD.setNumber()
-            speed = 1; //brake
-            direction = 0; // straight
+            //LD.setNumber(80);
+            speed = brake; //1
+            direction = straight; //0
         }*/
         if(sensor_st.SENSOR_right_in <= CORNER_DIST && sensor_st.SENSOR_left_in <= CORNER_DIST)
         {
             // middle(25 - 256), left(0 - 25), right(0 - 25)
             LD.setNumber(40);
-            speed = 2;      //go straight and slow,  break : maybe add reverse
-            direction = 0; // straight
+            speed = slow;      //2
+            direction = straight; //0
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
         {
             //middle(> 25), left(> 25), right(0 - 25)
             LD.setNumber(30);
-            speed = 2; //slow
-            direction = 2; //slight left
+            speed = slow; //2
+            direction = slight_left; //2
         }
         else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
         {
             //middle(> 25), left(0 - 25), right(> 25)
             LD.setNumber(10);
-            speed = 2; //slow
-            direction = 4; //slight right
+            speed = slow; //2
+            direction = slight_right; //4
         }
         else
         {
             //middle,left, right (> 25)
             LD.setNumber(90);
-            speed = 3; //slow
-            direction = 0; //straight
+            speed = medium; //3
+            direction = straight; //0
         }
     }
     transmit_to_motor(speed, direction);
