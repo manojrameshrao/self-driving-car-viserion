@@ -51,6 +51,7 @@ using namespace std;
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+SemaphoreHandle_t display_sem;
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -68,6 +69,7 @@ bool period_init(void)
 	CAN_reset_bus(can1);
 	CAN_bypass_filter_accept_all_msgs();
 	bluetoothreceiveinit(u3);
+	vSemaphoreCreateBinary(display_sem);
 	return true; // Must return true upon success
 }
 
@@ -92,13 +94,17 @@ void period_1Hz(uint32_t count)
 	{
 		CAN_reset_bus(can1);
 	}
-	//send_bluetooth_hertbeat();
+	send_bluetooth_hertbeat();
 
 }
 
 void period_10Hz(uint32_t count)
 {
 	receive_heartbeats();
+if(xSemaphoreTake(display_sem,0)){
+	sendDetails(u3,stats);
+}
+
 
 
 }
@@ -106,10 +112,14 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-	++count;
+	//++count;
 	receiveAllCoordinates(u3);
 	stats=recieve_cmd_from_bluetooth(u3);
-	receiveallcanmsges(u3,stats);
+	receiveallcanmsges(u3);
+
+	if(count%9==0){
+		xSemaphoreGive(display_sem);
+	}
 
 }
 

@@ -624,7 +624,7 @@ class DBC(object):
 def main(argv):
     dbcfile = '243.dbc'  # Default value unless overriden
     self_node = 'DRIVER'  # Default value unless overriden
-    gen_all = False
+    gen_all = True
     muxed_signal = False
     mux_bit_width = 0
     msg_ids_used = []
