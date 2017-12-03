@@ -19,8 +19,10 @@ MSG_ID: 99 	MSG_TYPE: S 	MSG_NAME: HB_MASTER
 MSG_ID: 100 	MSG_TYPE: S 	MSG_NAME: SENSOR_CRITICAL
 	SIG_NAME: SENSOR_Stop_Motor, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 
-MSG_ID: 101 	MSG_TYPE: S 	MSG_NAME: SENSOR_VALUES
-	SIG_NAME: SENSOR_Send_Rawvalues, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+MSG_ID: 101 	MSG_TYPE: S 	MSG_NAME: SENSORS_VALUES
+	SIG_NAME: SENSOR_left_in, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: SENSOR_middle_in, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: SENSOR_right_in, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 
 MSG_ID: 200 	MSG_TYPE: S 	MSG_NAME: MASTER_INITIALIZE
 	SIG_NAME: MASTER_Init_Boards, STATUS: Invalid Max or Min value., ACTION: Value Set to default
@@ -36,3 +38,13 @@ MSG_ID: 301 	MSG_TYPE: S 	MSG_NAME: MOTOR_STATUS
 
 MSG_ID: 500 	MSG_TYPE: S 	MSG_NAME: GET_START_COORDINATES
 	SIG_NAME: GET_COORDINATES, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 205 	MSG_TYPE: S 	MSG_NAME: MASTER_SEND_VALUES
+	SIG_NAME: MASTER_left_in, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: MASTER_middle_in, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: MASTER_right_in, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 301 	MSG_TYPE: S 	MSG_NAME: MOTOR_STATUS
+	SIG_NAME: MOTOR_Send_Speed, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: MOTOR_Send_PWM, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
