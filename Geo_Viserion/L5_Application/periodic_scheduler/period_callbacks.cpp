@@ -51,10 +51,7 @@ dbc_msg_hdr_t encoded_compass_pointer;
 
 
 
-char buffer[200]={0};
-char satelite[3];
 
-uint8_t no_sat_locked;
 /* GPS variables end
 */
 
@@ -85,7 +82,7 @@ bool period_init(void)
 
     /* call to initialize GPS module */
     init_GPS_module();
-    satelite[2]='\n';
+   // satelite[2]='\n';
     /* initialize CAN communication */
     CAN_init(can1, 100, 10, 10, NULL, NULL);
     CAN_bypass_filter_accept_all_msgs();
@@ -117,53 +114,47 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-
-    const char delimiter[2] = ",";
     bool status = false;
-    double latitude,longitude;
-    char * gps_data;
-    char *gps_latitude;
-    char *gps_longitude;
     /* variable to hold the current compass value */
     unsigned int  compass_head = 0;
     /* history_compass_head variable, holds the compass_head value */
     static unsigned int  history_compass_head =0;
     /* Get the GPS data */
-    GPS_data.gets(buffer,sizeof(buffer),0);
+ //   GPS_data.gets(buffer,sizeof(buffer),0);
     /* Byte 47 and 48 holds the number of connected satellites
     satelite[0]=buffer[46];
     satelite[1]=buffer[47];*/
-    char buff[20] = "jean,130,50,geee";
-    int i=0;
-    gps_data= strtok(buff, delimiter);
-    while (gps_data != NULL)
-    {
-      gps_data = strtok (NULL, ",");
-      i++;
-      if(i==1)
-          gps_latitude = gps_data;
-      if(i==2)
-      {
-          gps_longitude = gps_data;
-          break;
-      }
-    }
-    printf ("gps lat:%s\n",gps_latitude);
-    printf ("gps long:%s\n",gps_longitude);
-
-    no_sat_locked = atoi(satelite);
-    if(no_sat_locked>=3)
-    {
-        /* Turn ON Led 1 */
-        LE.on(1);
-    }
-    else
-    {
-        /* Turn OFF led 1*/
-        LE.off(1);
-    }
-    LD.setNumber(no_sat_locked);
-
+//    char buff[200] = "jean,130,50,geee";
+//    int i=0;
+//    gps_data= strtok(buff, delimiter);
+//    while (gps_data != NULL)
+//    {
+//      gps_data = strtok (NULL, ",");
+//      i++;
+//      if(i==1)
+//          gps_latitude = gps_data;
+//      if(i==2)
+//      {
+//          gps_longitude = gps_data;
+//          break;
+//      }
+//    }
+//    printf ("gps lat:%s\n",gps_latitude);
+//    printf ("gps long:%s\n",gps_longitude);
+//
+//    no_sat_locked = atoi(satelite);
+//    if(no_sat_locked>=3)
+//    {
+//        /* Turn ON Led 1 */
+//        LE.on(1);
+//    }
+//    else
+//    {
+//        /* Turn OFF led 1*/
+//        LE.off(1);
+//    }
+//    LD.setNumber(no_sat_locked);
+    get_GPS_data();
     /* get the compass head (YAW) from Razor SEN-14001 */
     status = get_compass_head(&compass_head);
     if(status)
