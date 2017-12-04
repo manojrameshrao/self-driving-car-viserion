@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include <string.h>
 #include "compass.hpp"
 #include "uart0.hpp"
 #include "uart2.hpp"
@@ -47,19 +48,28 @@ bool init_compass_serial(UART_CHANNEL UART_INTERFACE,unsigned int uart_baudrate)
  */
 bool get_compass_head(unsigned int * compass_head_pointer)
 {
+    const char delimiter[2] = ",";
     bool rtn = false;
     char str[6]={0};
+    static char * head_data = NULL;
     char remaining;
     rtn = u3.gets(str,sizeof(str),10);
     //u3.flush();
 
    // u0_dbg_printf("str %s \n",str);
+
     if(rtn)
     {
+        head_data = strtok(str, delimiter);
+        if(NULL != head_data)
+        {
+        //u0_dbg_printf("delim %s \n",head_data);
      //    u0_dbg_printf("return success \n");
-        *compass_head_pointer = atoi(str);
+       // *compass_head_pointer = atoi(str);
+        *compass_head_pointer = atoi(head_data);
+        }
     }
-    u3.getChar(&remaining,0);
+    //u3.getChar(&remaining,0);
     return rtn;
 }
 /* function: init_compass_serial

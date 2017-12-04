@@ -29,6 +29,7 @@
  */
 #include "printf_lib.h"
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 #include "io.hpp"
 #include "periodic_callback.h"
@@ -39,6 +40,7 @@
 #include "compass.hpp"
 #include "generated_Viserion.h"
 #include "uart2.hpp"
+#include <stdlib.h>
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 /* compass variables */
@@ -69,21 +71,26 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 bool period_init(void)
 {
     bool status = false;
-      status = init_compass_serial(UART3,115200);
-      if(status)
-      {
-          printf("compass serial interface initialized \n");
-      }
-      else
-      {
-          printf("compass serial interface not initialized \n");
-      }
+    /* initalize compass */
+    status = init_compass_serial(UART3,115200);
+    if(status)
+    {
+       printf("compass serial interface initialized \n");
+    }
+    else
+    {
+       printf("compass serial interface not initialized \n");
+    }
+
+
+    /* call to initialize GPS module */
+    init_GPS_module();
+    satelite[2]='\n';
+    /* initialize CAN communication */
     CAN_init(can1, 100, 10, 10, NULL, NULL);
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
 
-    init_GPS_module(); //call to initialize GPS module
-    satelite[2]='\n';
     return true; // Must return true upon success
 }
 
@@ -102,46 +109,66 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    //LE.toggle(1);
     if(CAN_is_bus_off(can1))
     {
-      //printf("Can bus is off\n");
             CAN_reset_bus(can1);
     }
-
-   // geo_heartbeat();
 }
 
 void period_10Hz(uint32_t count)
 {
 
-
+    const char delimiter[2] = ",";
+    bool status = false;
+    double latitude,longitude;
+    char * gps_data;
+    char *gps_latitude;
+    char *gps_longitude;
+    /* variable to hold the current compass value */
+    unsigned int  compass_head = 0;
+    /* history_compass_head variable, holds the compass_head value */
+    static unsigned int  history_compass_head =0;
+    /* Get the GPS data */
     GPS_data.gets(buffer,sizeof(buffer),0);
-
-    //u0_dbg_printf("\nb-%s",buffer);
-
+    /* Byte 47 and 48 holds the number of connected satellites
     satelite[0]=buffer[46];
-    satelite[1]=buffer[47];
+    satelite[1]=buffer[47];*/
+    char buff[20] = "jean,130,50,geee";
+    int i=0;
+    gps_data= strtok(buff, delimiter);
+    while (gps_data != NULL)
+    {
+      gps_data = strtok (NULL, ",");
+      i++;
+      if(i==1)
+          gps_latitude = gps_data;
+      if(i==2)
+      {
+          gps_longitude = gps_data;
+          break;
+      }
+    }
+    printf ("gps lat:%s\n",gps_latitude);
+    printf ("gps long:%s\n",gps_longitude);
+
     no_sat_locked = atoi(satelite);
-   // u0_dbg_printf("%d\n",no_sat_locked);
     if(no_sat_locked>=3)
     {
+        /* Turn ON Led 1 */
         LE.on(1);
     }
     else
     {
+        /* Turn OFF led 1*/
         LE.off(1);
     }
     LD.setNumber(no_sat_locked);
 
-    bool status = false;
-    unsigned int  compass_head = 0;
-    static unsigned int  history_compass_head =0;
-
-  // receive_heartbeats();
+    /* get the compass head (YAW) from Razor SEN-14001 */
     status = get_compass_head(&compass_head);
     if(status)
     {
+        /* indication of Razor SEN-14001's communication with SJ1 */
         LE.toggle(2);
         history_compass_head = compass_head;
       //  u0_dbg_printf("compass_head %d \n",compass_head);
@@ -150,23 +177,22 @@ void period_10Hz(uint32_t count)
     }
     else
     {
-        LE.toggle(3);
-      //  u0_dbg_printf("history_compass_head %d \n",history_compass_head);
-     //  printf("failed to get the compass head \n");
+        /* Indication of RAZOR SEN14001 not able to send the data */
+       LE.toggle(3);
+    //   u0_dbg_printf("history_compass_head %d \n",history_compass_head);
        compass_pointer.SEND_HEAD = history_compass_head;
-      /*  compass_pointer.SEND_HEAD = 217; */
        dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
 }
 
 void period_100Hz(uint32_t count)
 {
-    //LE.toggle(3);
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-  //  LE.toggle(4);
+
 }
