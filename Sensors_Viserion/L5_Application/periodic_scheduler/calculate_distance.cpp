@@ -48,9 +48,13 @@ void calculate_distance(int &l, int &r, int &m){
      * there is need to deal with that case. Value 25 is assigned because it is our threshold when master is informing
      * motor what to do. Value 25 will not change value returned from filter since list is 4 elements long
      */
-    if(l > 254) l = 25;
-    if(m > 254) m = 25;
-    if(r > 254) r = 25;
+    if(l > 254) l = 26;
+    if(m > 254) m = 26;
+    if(r > 254) r = 26;
+
+    if(l < 6) l = 6;
+    if(m < 6) m = 6;
+    if(r < 6) r = 6;
 }
 
 

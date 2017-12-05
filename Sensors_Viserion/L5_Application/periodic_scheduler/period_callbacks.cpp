@@ -105,7 +105,6 @@ bool period_init(void)
     eint3_enable_port2(0, eint_rising_edge, backSensorStartISR);
     eint3_enable_port2(0, eint_falling_edge, backSensorStopISR);
 
-
     return true; // Must return true upon success
 }
 
@@ -130,8 +129,11 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
+    led_on(filtered_left, filtered_middle, filtered_right, filtered_back);
+    send_sensors_data(filtered_left, filtered_right, filtered_middle, filtered_back);
 
-    printf("Left: %d, Middle: %d, Right: %d Back: %d \n", filtered_left, filtered_middle, filtered_right, filtered_back);
+//    printf("Left: %d, Middle: %d, Right: %d Back: %d \n", filtered_left, filtered_middle, filtered_right, filtered_back);
+//    printf("Left: %d, Right: %d  \n", filtered_left, filtered_right);
 }
 
 void period_100Hz(uint32_t count)
@@ -147,9 +149,6 @@ void period_100Hz(uint32_t count)
         filtered_middle = filter(list_middle);
         filtered_right  = filter(list_right);
         filtered_back  = filter(list_back);
-
-        led_on(filtered_left, filtered_middle, filtered_right, filtered_back);
-        send_sensors_data(filtered_left, filtered_right, filtered_middle, filtered_back);
     }
 }
 
