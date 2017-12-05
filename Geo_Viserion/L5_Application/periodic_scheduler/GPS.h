@@ -26,4 +26,7 @@ double convert_to_degrees(double value);
 void set_projection_data(double latitude, double longitude);
 void set_checkpoint_data(double latitude, double longitude);
 float get_bearing_angle();
+bool get_satallites_status(uint8_t satellite);
+bool get_GNGGA_status(char * format);
+bool destination_reached();
 #endif /* L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_ */

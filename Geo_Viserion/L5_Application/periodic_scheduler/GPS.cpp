@@ -41,49 +41,55 @@ double convert_to_degrees(double value)
 void get_GPS_data()
 {
     const char delimiter[2] = ",";
-    bool status = false;
-    double latitude,longitude;
-    char * gps_data;
-    char *gps_latitude;
-    char *gps_longitude;
+    //bool status = false;
+    //double latitude,longitude;
+    char * gps_data = NULL;
+    char *gps_latitude = NULL;
+    char *gps_longitude = NULL;
+    char * format = NULL;
     /* Get the GPS data */
     GPS_data.gets(buffer,sizeof(buffer),0);
-    //char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
+    char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
     int i=0;
     /* Byte 47 and 48 holds the number of connected satellites */
-    satelite[0]=buffer[46];
-    satelite[1]=buffer[47];
+    satelite[0]=buff[46];
+    satelite[1]=buff[47];
     satelite[2]='\n';
     no_sat_locked = atoi(satelite);
-    if(no_sat_locked>=3)
+    gps_data= strtok(buff, delimiter);
+    format = gps_data;
+    printf("format:%s\n", format);
+    if(get_GNGGA_status(format) && get_satallites_status(no_sat_locked))
     {
         /* Turn ON Led 1 */
         LE.on(1);
+        while (gps_data != NULL)
+        {
+          gps_data = strtok (NULL, ",");
+          i++;
+          if(i==2)
+              gps_latitude = gps_data;
+          if(i==4)
+          {
+              gps_longitude = gps_data;
+              break;
+          }
+        }
+        current.latitude = convert_to_degrees(atof(gps_latitude));
+        current.longitude = convert_to_degrees(atof(gps_longitude));
+        set_projection_data(current.latitude,current.longitude);
+        //ISSS chekpoint
+        set_checkpoint_data(121.8811567, 37.336601);
     }
     else
     {
+        printf("unlocked\n");
         /* Turn OFF led 1*/
         LE.off(1);
     }
-
-    gps_data= strtok(buffer, delimiter);
-    while (gps_data != NULL)
-    {
-      gps_data = strtok (NULL, ",");
-      i++;
-      if(i==2)
-          gps_latitude = gps_data;
-      if(i==4)
-      {
-          gps_longitude = gps_data;
-          break;
-      }
-    }
-    current.latitude = convert_to_degrees(atof(gps_latitude));
-    current.longitude = convert_to_degrees(atof(gps_longitude));
-    set_projection_data(current.latitude,current.longitude);
-    printf ("gps lat:%f\n",convert_to_degrees(atof(gps_latitude)));
-    printf ("gps long:%f\n",convert_to_degrees(atof(gps_longitude)));
+    //set_checkpoint_data(121.00, 37.123);
+    //printf ("gps lat:%f\n",convert_to_degrees(atof(gps_latitude)));
+   // printf ("gps long:%f\n",convert_to_degrees(atof(gps_longitude)));
 }
 
 /*Set projection coordinates based on current coordinates*/
@@ -103,6 +109,12 @@ void set_checkpoint_data(double latitude, double longitude)
 /*Calculate the bearing angle*/
 float get_bearing_angle()
 {
+    /*printf ("current lat:%f\n",current.latitude);
+    printf ("current longi:%f\n",current.longitude);
+    printf ("projection lat:%f\n",projection.latitude);
+    printf ("projection longi:%f\n",projection.longitude);
+    printf ("checkpoint lat:%f\n",checkpoint.latitude);
+    printf ("checkpoint longi:%f\n",checkpoint.longitude);*/
     cordinates vector_CD, vector_CP;
     double dot_product = 0, mod_CD =0, mod_CP=0;
     float bearing_angle = 0;
@@ -111,11 +123,11 @@ float get_bearing_angle()
     get_GPS_data();
 
     /*Vector coordinates of car position(current) to its destination (checkpoint)*/
-    vector_CD.latitude = checkpoint.latitude - current.longitude;
+    vector_CD.latitude = checkpoint.latitude - current.latitude;
     vector_CD.longitude = checkpoint.longitude - current.longitude;
 
     /*Vector coordinates of car position(current) to its projection (projection)*/
-    vector_CP.latitude = projection.latitude - current.longitude;
+    vector_CP.latitude = projection.latitude - current.latitude;
     vector_CP.longitude = projection.longitude - current.longitude;
 
     /*Dot product of both Vectors CD & CP (CD . CP)*/
@@ -136,7 +148,43 @@ float get_bearing_angle()
     if(checkpoint.longitude < current.longitude)
         bearing_angle = bearing_angle*(-1);
 
-    printf("Bearing angle: %f\n", bearing_angle);
     return bearing_angle;
 
+}
+
+/*Check $GNGGA format*/
+bool get_GNGGA_status(char * format)
+{
+    if(strcmp(format,"$GNGGA") == 0)
+        return true;
+    else
+        return false;
+}
+
+/*Check satellite format*/
+bool get_satallites_status(uint8_t satellite)
+{
+    if( 3 <= satellite )
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+/*Destination reached check*/
+bool destination_reached()
+{
+    current.latitude = checkpoint.latitude + 0.00001;
+    current.longitude = checkpoint.latitude + 0.00001;
+    if((current.latitude <= checkpoint.latitude + 0.00002) && (current.latitude >= checkpoint.latitude - 0.00002))
+    {
+        if((current.longitude <= checkpoint.longitude + 0.00002) && (current.longitude >= checkpoint.longitude - 0.00002))
+        LE.on(2);
+        return true;
+    }
+    LE.off(2);
+    return false;
 }

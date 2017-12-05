@@ -43,9 +43,9 @@
 #include <stdlib.h>
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
-/* compass variables */
-SEND_COMPASS_HEAD_t compass_pointer;
-dbc_msg_hdr_t encoded_compass_pointer;
+
+SEND_GEO_ANGLES_t angles_data;
+dbc_msg_hdr_t encoded_geo_angles;
 /* GPS variables start
 **/
 
@@ -115,65 +115,43 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
     bool status = false;
+    float bearing_angle;
     /* variable to hold the current compass value */
     unsigned int  compass_head = 0;
     /* history_compass_head variable, holds the compass_head value */
     static unsigned int  history_compass_head =0;
-    /* Get the GPS data */
- //   GPS_data.gets(buffer,sizeof(buffer),0);
-    /* Byte 47 and 48 holds the number of connected satellites
-    satelite[0]=buffer[46];
-    satelite[1]=buffer[47];*/
-//    char buff[200] = "jean,130,50,geee";
-//    int i=0;
-//    gps_data= strtok(buff, delimiter);
-//    while (gps_data != NULL)
-//    {
-//      gps_data = strtok (NULL, ",");
-//      i++;
-//      if(i==1)
-//          gps_latitude = gps_data;
-//      if(i==2)
-//      {
-//          gps_longitude = gps_data;
-//          break;
-//      }
-//    }
-//    printf ("gps lat:%s\n",gps_latitude);
-//    printf ("gps long:%s\n",gps_longitude);
-//
-//    no_sat_locked = atoi(satelite);
-//    if(no_sat_locked>=3)
-//    {
-//        /* Turn ON Led 1 */
-//        LE.on(1);
-//    }
-//    else
-//    {
-//        /* Turn OFF led 1*/
-//        LE.off(1);
-//    }
-//    LD.setNumber(no_sat_locked);
-    get_GPS_data();
+    static unsigned int  history_GPS_bear =0;
+    bearing_angle = get_bearing_angle();
     /* get the compass head (YAW) from Razor SEN-14001 */
     status = get_compass_head(&compass_head);
     if(status)
     {
         /* indication of Razor SEN-14001's communication with SJ1 */
-        LE.toggle(2);
+       // LE.toggle(2);
         history_compass_head = compass_head;
       //  u0_dbg_printf("compass_head %d \n",compass_head);
-        compass_pointer.SEND_HEAD = compass_head;
-        dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
+      //  angles_data.SEND_HEAD = compass_head;
+      //  angles_data.SEND_BEAR = bearing_angle;
+       // dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
     else
     {
         /* Indication of RAZOR SEN14001 not able to send the data */
-       LE.toggle(3);
+      // LE.toggle(3);
     //   u0_dbg_printf("history_compass_head %d \n",history_compass_head);
-       compass_pointer.SEND_HEAD = history_compass_head;
-       dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
+       compass_head = history_compass_head;
+       //angles_data.SEND_HEAD = history_compass_head;
+       //dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
+    if(compass_head > 180)
+        compass_head = compass_head - 360;
+    printf("Bearing angle: %f\n", bearing_angle);
+    printf("Heading angle: %f\n", compass_head);
+    angles_data.SEND_HEAD = compass_head;
+    angles_data.SEND_BEAR = bearing_angle;
+    dbc_encode_and_send_SEND_GEO_ANGLES(&angles_data);
+    if(destination_reached())
+        printf("destination reached");
 }
 
 void period_100Hz(uint32_t count)
