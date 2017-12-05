@@ -119,34 +119,28 @@ void period_10Hz(uint32_t count)
     /* variable to hold the current compass value */
     unsigned int  compass_head = 0;
     /* history_compass_head variable, holds the compass_head value */
-    static unsigned int  history_compass_head =0;
-    static unsigned int  history_GPS_bear =0;
-    bearing_angle = get_bearing_angle();
+    static unsigned int  history_compass_head = 0;
+    static unsigned int  history_GPS_bear = 0;
+    //bearing_angle = get_bearing_angle();
+    bearing_angle = get_bearing_angle_haversine();
+    printf("Haver:%f\n", get_bearing_angle_haversine());
+    //printf("Normal:%f\n", bearing_angle);
     /* get the compass head (YAW) from Razor SEN-14001 */
     status = get_compass_head(&compass_head);
     if(status)
     {
         /* indication of Razor SEN-14001's communication with SJ1 */
-       // LE.toggle(2);
         history_compass_head = compass_head;
-      //  u0_dbg_printf("compass_head %d \n",compass_head);
-      //  angles_data.SEND_HEAD = compass_head;
-      //  angles_data.SEND_BEAR = bearing_angle;
-       // dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
     else
     {
         /* Indication of RAZOR SEN14001 not able to send the data */
-      // LE.toggle(3);
-    //   u0_dbg_printf("history_compass_head %d \n",history_compass_head);
        compass_head = history_compass_head;
-       //angles_data.SEND_HEAD = history_compass_head;
-       //dbc_encode_and_send_SEND_COMPASS_HEAD(&compass_pointer);
     }
     if(compass_head > 180)
         compass_head = compass_head - 360;
-    printf("Bearing angle: %f\n", bearing_angle);
-    printf("Heading angle: %f\n", compass_head);
+   // printf("Bearing: %f\n", bearing_angle);
+  //  printf("Heading: %d\n", compass_head);
     angles_data.SEND_HEAD = compass_head;
     angles_data.SEND_BEAR = bearing_angle;
     dbc_encode_and_send_SEND_GEO_ANGLES(&angles_data);

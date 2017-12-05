@@ -23,9 +23,14 @@ void init_GPS_module()
 {
     /*Configure the GPS in pedestrian mode*/
     GPS_data.init(115200,76,1);
+    LE.off(4);
 }
 
-/*Convert the DDDMM.MMMMM format to decimal degrees*/
+/* function: convert_to_degrees
+ * Convert the DDDMM.MMMMM format to decimal degrees
+ * value[in]: coordinates to be converted to decimal degrees
+ * Returns :True(on success)/false(fail)
+ */
 double convert_to_degrees(double value)
 {
     double minutes;
@@ -37,7 +42,9 @@ double convert_to_degrees(double value)
     return degrees + minutes;
 }
 
-/*Get current coordinates from GPS module*/
+/* function: get_GPS_data
+ * Get current coordinates from GPS module
+ */
 void get_GPS_data()
 {
     const char delimiter[2] = ",";
@@ -45,20 +52,26 @@ void get_GPS_data()
     char *gps_latitude = NULL;
     char *gps_longitude = NULL;
     char * format = NULL;
+
     /* Get the GPS data */
     GPS_data.gets(buffer,sizeof(buffer),0);
     char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
     int i=0;
     printf("GPS:%s\n", buffer);
+
     /* Byte 47 and 48 holds the number of connected satellites */
     satelite[0]=buffer[46];
     satelite[1]=buffer[47];
     satelite[2]='\n';
     no_sat_locked = atoi(satelite);
+
+    /*Set the num of satelites on LED*/
+    LD.setNumber(no_sat_locked);
     gps_data= strtok(buffer, delimiter);
     format = gps_data;
     //printf("format:%s\n", format);
     if(get_GNGGA_status(format) && get_satallites_status(no_sat_locked))
+    //if(1)
     {
         /* Turn ON Led 1 */
         LE.on(1);
@@ -75,10 +88,13 @@ void get_GPS_data()
           }
         }
         current.latitude = convert_to_degrees(atof(gps_latitude));
-        current.longitude = convert_to_degrees(atof(gps_longitude));
+        current.longitude = (-1) * convert_to_degrees(atof(gps_longitude));
+        current.latitude = 37.3382082;
+        current.longitude = -12.8863286;
         set_projection_data(current.latitude,current.longitude);
         //ISSS chekpoint
-        set_checkpoint_data(121.8811567, 37.336601);
+        set_checkpoint_data(37.336601, -121.8811567);
+
     }
     else
     {
@@ -90,21 +106,32 @@ void get_GPS_data()
    // printf ("gps long:%f\n",convert_to_degrees(atof(gps_longitude)));
 }
 
-/*Set projection coordinates based on current coordinates*/
+/* function: set_projection_data
+ * Set projection coordinates based on current coordinates
+ * latitude[in]: coordinates of current position
+ * longitude[in]: coordinates of current position
+ */
 void set_projection_data(double latitude, double longitude)
 {
     projection.latitude = latitude + 0.01;
     projection.longitude = longitude;
 }
 
-/*Set checkpoint coordinates based on bluetooth*/
+/* function: set_checkpoint_data
+ * Set checkpoint coordinates based on bluetooth
+ * latitude[in]: coordinates of current position
+ * longitude[in]: coordinates of current position
+ */
 void set_checkpoint_data(double latitude, double longitude)
 {
     checkpoint.latitude = latitude;
     checkpoint.longitude = longitude;
 }
 
-/*Calculate the bearing angle*/
+/* function: get_bearing_angle
+ * Calculate the bearing angle using vector dot product
+ * Bearing angle[out]: returns the bearing angle
+ */
 float get_bearing_angle()
 {
     printf ("c_lat:%f\n",current.latitude);
@@ -150,6 +177,10 @@ float get_bearing_angle()
 
 }
 
+/* function: get_GNGGA_status
+ * Check $GNGGA format
+ * bool[out]: returns true if $GNGGA format
+ */
 /*Check $GNGGA format*/
 bool get_GNGGA_status(char * format)
 {
@@ -159,7 +190,10 @@ bool get_GNGGA_status(char * format)
         return false;
 }
 
-/*Check satellite format*/
+/* function: get_satallites_status
+ * Get satallites status
+ * bool[out]: returns true if >=3 satellites locked
+ */
 bool get_satallites_status(uint8_t satellite)
 {
     if( 3 <= satellite )
@@ -172,18 +206,70 @@ bool get_satallites_status(uint8_t satellite)
     }
 }
 
-/*Destination reached check*/
+/* function: destination_reached
+ * Destination reached check
+ * bool[out]: returns true if destination reached else false
+ */
 bool destination_reached()
 {
-    //current.latitude = checkpoint.latitude + 0.00001;
-    //current.longitude = checkpoint.longitude + 0.00001;
     if((current.latitude <= checkpoint.latitude + 0.00002) && (current.latitude >= checkpoint.latitude - 0.00002))
     {
         if((current.longitude <= checkpoint.longitude + 0.00002) && (current.longitude >= checkpoint.longitude - 0.00002))
         {
-           LE.on(4);
+           LE.toggle(4);
            return true;
         }
     }
     return false;
+}
+
+/* function: get_bearing_angle_haversine
+ * Calculate the bearing angle using haversine
+ * Bearing angle[out]: returns the bearing angle
+ */
+float get_bearing_angle_haversine()
+{
+   /*Haversine formula tan(theta) =  cos(lat2)*sin(dlon) /
+                   (cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(dlon))*/
+
+    float lat1,lat2,lon1,lon2,dlon,theta, numerator, denominator;
+
+    /*Get GPS data and set projection coordinates*/
+    get_GPS_data();
+
+    /*Radian conversions*/
+    lat1 = to_radians(current.latitude);
+    lon1 = to_radians(current.longitude);
+    lat2 = to_radians(checkpoint.latitude);
+    lon2 = to_radians(checkpoint.longitude);
+    dlon = lon2 - lon1;
+
+    /*calculate the numerator and denominator for haversine formula*/
+    numerator = (cos(lat2)*sin(dlon));
+    denominator = (cos(lat1)*sin(lat2)) - (sin(lat1)*cos(lat2)*cos(dlon));
+
+    /*Calculate bearing angle*/
+    theta = atan2(numerator, denominator);
+    return to_degrees(theta);
+
+}
+
+/* function: to_radians
+ * Degrees to radians
+ * Degree value[in]: input the degree value
+ * Radian value[out]: returns the radian angle
+ */
+float to_radians(float value)
+{
+    return (value * TO_RAD);
+}
+
+/* function: to_radians
+ * Radians to degrees
+ * Radian value[in]: input the radian angle
+ * Degree value[out]: return the degree value
+ */
+float to_degrees(float value)
+{
+    return (value / TO_RAD);
 }

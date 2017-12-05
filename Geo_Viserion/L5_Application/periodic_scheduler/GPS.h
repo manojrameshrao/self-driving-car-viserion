@@ -20,7 +20,7 @@ struct cordinates{
 };
 extern Uart2& GPS_data;
 extern char buffer[200];
-
+#define TO_RAD (M_PI / 180)
 void init_GPS_module();
 void get_GPS_data();
 double convert_to_degrees(double value);
@@ -30,4 +30,7 @@ float get_bearing_angle();
 bool get_satallites_status(uint8_t satellite);
 bool get_GNGGA_status(char * format);
 bool destination_reached();
+float to_radians(float value);
+float get_bearing_angle_haversine();
+float to_degrees(float value);
 #endif /* L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_ */
