@@ -20,6 +20,7 @@ struct cordinates{
 };
 extern Uart2& GPS_data;
 extern char buffer[200];
+
 void init_GPS_module();
 void get_GPS_data();
 double convert_to_degrees(double value);
