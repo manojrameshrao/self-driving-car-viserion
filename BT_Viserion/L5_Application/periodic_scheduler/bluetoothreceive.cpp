@@ -29,6 +29,7 @@ static char stats[]="STATS";
 static char sstat[]="SSTAT";
 static char start[]="START";
 static char stop[]="VSTOP";
+static char cstop[]="CENDS";
 
 
 void bluetoothreceiveinit(Uart3& u3)
@@ -49,11 +50,18 @@ bool recieve_cmd_from_bluetooth(Uart3& u3)
 	   // printf("%s \n",temp);
 
 
-		if(strcmp(temp, point) == 0)
+		if(strcmp(temp,stop) == 0)
 		{
-			//send can msg to geo asking for coordinates
-			u3.putline(send,portMAX_DELAY);
+			// send can msg to master to stop
+			sendCarStop();
 		}
+
+		else if(strcmp(temp,cstop) == 0)
+				{
+			sendEndOfCoordinares();
+					//send stat data to blutooth in 10hz
+
+				}
 
 		else if(strcmp(temp,stats) == 0)
 		{
@@ -72,12 +80,17 @@ bool recieve_cmd_from_bluetooth(Uart3& u3)
 		else if(strcmp(temp,start) == 0)
 		{
 			//send can msg to master to start car
+			sendCarStart();
+
 		}
 
-		else if(strcmp(temp,stop) == 0)
-		{
-			// send can msg to master to stop
-		}
+		else if(strcmp(temp, point) == 0)
+				{
+					//send can msg to geo asking for coordinates
+					u3.putline(send,portMAX_DELAY);
+				}
+
+
 	}
 
 	return stat;

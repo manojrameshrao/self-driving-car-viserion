@@ -25,6 +25,7 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "periodic_scheduler/display.hpp"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -123,6 +124,11 @@ int main(void)
         u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
         scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
     #endif
+
+	#if 1
+    scheduler_add_task(new display_Task(PRIORITY_LOW));
+	#endif
+
 
     scheduler_start(); ///< This shouldn't return
     return -1;

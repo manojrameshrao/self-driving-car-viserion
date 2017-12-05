@@ -406,7 +406,7 @@ static uint16_t year;
 
 void setDIRECTION_INIT(int setdir);
 void setSPEED_INIT(int setspeed);
-void setGPS_INIT(int setgps);
+void setSENSOR_LEFT_INIT(int setsensor_left);
 void setBATTERY_INIT(int setbattery);
 
 /****************************************************************************/
@@ -457,7 +457,7 @@ public:
     void clearmonth(void);
     void clearDIRECTION_INIT(void);
     void clearSPEED_INIT(void);
-    void clearGPS_INIT(void);
+    void clearSENSOR_LEFT_INIT(void);
     void clearBATTERY_INIT(void);
 
 

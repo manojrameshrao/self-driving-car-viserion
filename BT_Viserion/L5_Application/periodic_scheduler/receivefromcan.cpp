@@ -11,8 +11,8 @@
 #include <string.h>
 using namespace std;
 
-SEND_START_COORDINATES_t send_start_co={0};
-SEND_COMPASS_HEAD_t send_compass_dir={0};
+SEND_COORDINATES_t send_start_co={0};
+SEND_GEO_ANGLES_t send_compass_dir={0};
 MOTOR_STATUS_t speed ={0};
 SENSORS_VALUES_t sensor_values={0};
 
@@ -45,6 +45,7 @@ void receiveallcanmsges(Uart3 & u3){
 				sensor_right=sensor_values.SENSOR_right_in;
 				sensor_middle = sensor_values.SENSOR_middle_in;
 
+				setSENSOR_LEFT_INIT(sensor_left);
 
 
 			}
@@ -54,7 +55,7 @@ void receiveallcanmsges(Uart3 & u3){
 
 		case 405:{
 
-			if(dbc_decode_SEND_START_COORDINATES(&send_start_co,can_msg.data.bytes,&can_msg_hdr))
+			if(dbc_decode_SEND_COORDINATES(&send_start_co,can_msg.data.bytes,&can_msg_hdr))
 			{
 				//write function for what to do when u receive coordinates from gps
 			}
@@ -62,7 +63,7 @@ void receiveallcanmsges(Uart3 & u3){
 		}
 		break;
 		case 401 :{
-				if(dbc_decode_SEND_COMPASS_HEAD(&send_compass_dir,can_msg.data.bytes,&can_msg_hdr))
+				if(dbc_decode_SEND_GEO_ANGLES(&send_compass_dir,can_msg.data.bytes,&can_msg_hdr))
 					 comp=send_compass_dir.SEND_HEAD;
 				setDIRECTION_INIT(comp);
 		}

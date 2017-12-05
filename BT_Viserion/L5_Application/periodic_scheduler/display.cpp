@@ -37,7 +37,7 @@ using namespace std;
 
  int DIRECTION_INIT =0;
  int SPEED_INIT =0;
- int GPS_INIT =0;
+ int SENSOR_LEFT_INIT =0;
  int BATTERY_INIT =0;
 
  void setDIRECTION_INIT(int setdir){
@@ -46,8 +46,8 @@ using namespace std;
  void setSPEED_INIT(int setspeed){
 	 SPEED_INIT=setspeed;
   }
- void setGPS_INIT(int setgps){
-	 GPS_INIT=setgps;
+ void setSENSOR_LEFT_INIT(int setgps){
+	 SENSOR_LEFT_INIT=setgps;
   }
  void setBATTERY_INIT(int setbattery){
 	 BATTERY_INIT=setbattery;
@@ -62,7 +62,7 @@ char buff[50] = {ZERO};
 
 SemaphoreHandle_t SPEED_REFRESH	               = NULL;
 SemaphoreHandle_t DIRECTION_REFRESH	      		   = NULL;
-SemaphoreHandle_t GPS_REFRESH				   = NULL;
+SemaphoreHandle_t SENSOR_LEFT_REFRESH				   = NULL;
 SemaphoreHandle_t BATTERY_REFRESH     			   = NULL;
 // Routine to configure Power to drive LCD
 void LCDPower();
@@ -138,22 +138,17 @@ bool display_Task::run(void* p)
 	// Display initial  sensor values ( All 0's)
 	xSemaphoreGive(SPEED_REFRESH);
 	xSemaphoreGive(DIRECTION_REFRESH);
-	xSemaphoreGive(GPS_REFRESH);
+	xSemaphoreGive(SENSOR_LEFT_REFRESH);
 	xSemaphoreGive(BATTERY_REFRESH);
 
 	while(1)
 	{
 
-		  DIRECTION_INIT++;
-		  SPEED_INIT++;
-		  GPS_INIT ++;
-		  BATTERY_INIT ++;
-
 		displayScrn1();
-vTaskDelay(500);
+//vTaskDelay(500);
 xSemaphoreGive(SPEED_REFRESH);
 	xSemaphoreGive(DIRECTION_REFRESH);
-	xSemaphoreGive(GPS_REFRESH);
+	xSemaphoreGive(SENSOR_LEFT_REFRESH);
 	xSemaphoreGive(BATTERY_REFRESH);
 
 	}
@@ -331,7 +326,7 @@ bool display_Task::init(void)
 	 // Create a binary semaphores to signal sensor parameters display refresh
 	 SPEED_REFRESH        = xSemaphoreCreateBinary();
 	 DIRECTION_REFRESH        = xSemaphoreCreateBinary();
-	 GPS_REFRESH        = xSemaphoreCreateBinary();
+	 SENSOR_LEFT_REFRESH        = xSemaphoreCreateBinary();
 	 BATTERY_REFRESH        = xSemaphoreCreateBinary();
 
      return 1;
@@ -388,7 +383,7 @@ Outputs     :  None
 Returns     :  None
 Notes       :  None
 ----------------------------------------------------------------------------*/
-void display_Task::clearGPS_INIT(void)
+void display_Task::clearSENSOR_LEFT_INIT(void)
 {
 	fillRect(145,105,86,35,ILI9340_BLACK);
 }
@@ -446,8 +441,8 @@ void display_Task::displayScrn1(void)
 	drawFastHLine(5,150,231,ILI9340_WHITE);
 	drawFastHLine(5,200,231,ILI9340_WHITE);
 	drawString("Speed",12,20,2,ILI9340_YELLOW);
-	drawString("Distance",12,70,2,ILI9340_YELLOW);
-	drawString("GPS",12,120,2,ILI9340_YELLOW);
+	drawString("Direction",12,70,2,ILI9340_YELLOW);
+	drawString("Sensor_Left",12,120,2,ILI9340_YELLOW);
 	drawString("Battery",12,170,2,ILI9340_YELLOW);
 
 	// Is there any change in BPS?
@@ -467,10 +462,10 @@ void display_Task::displayScrn1(void)
 	}
 
 	// Is there any change in Body Temp?
-	if(xSemaphoreTake(GPS_REFRESH,50))
+	if(xSemaphoreTake(SENSOR_LEFT_REFRESH,50))
 	{
-		itoa(GPS_INIT,buff,10);
-		clearGPS_INIT();
+		itoa(SENSOR_LEFT_INIT,buff,10);
+		clearSENSOR_LEFT_INIT();
 		drawString(buff,148,120,2,ILI9340_YELLOW);
 	}
 	// Is there any change in Steps?
