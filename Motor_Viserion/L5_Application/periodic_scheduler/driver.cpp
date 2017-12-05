@@ -13,8 +13,8 @@ const float MOTOR_INIT = 18;
 #define FORWARD_SLOW        19
 #define FORWARD_MEDIUM      19.2    //19.2
 #define FORWARD_FAST        20.5
-#define REVERSE             16.8
-#define BRAKES              12
+#define REVERSE             16.1
+#define BRAKES              17
 #define SERVO_CENTER        17.7
 #define SERVO_HARD_LEFT     10.9
 #define SERVO_SLIGHT_LEFT   14.9
@@ -92,7 +92,7 @@ void initialization() {
 bool calculate_speed() {
 	kph = (2 * PI * WHEEL_RADIUS * CONST_KPH * car.getRevolutions());
 	car.setkph(kph);
-	LD.setNumber(kph);
+	//LD.setNumber(kph);
 	curr_rps = car.getRevolutions();
 	sending_speed_kph.MOTOR_Send_Speed = kph;
 	dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
@@ -102,21 +102,22 @@ bool calculate_speed() {
 }
 
 void reverse_init() {
-	if (reverse_count == 5)
-		motor_speed.set(MOTOR_INIT); //motor_speed_val = MOTOR_INIT;
-	else if (reverse_count == 10)
-		motor_speed.set(REVERSE); //motor_speed_val = REVERSE;
-	else if (reverse_count == 15) {
-		motor_speed.set(MOTOR_INIT);
-		reverse_count = 20;
-	}
-}
 
-bool ifreverse() {
-	if (reverse_flag == 1)
-		return true;
-	else
-		return false;
+	if (reverse_count == 5)
+	{
+		LE.on(1);
+		motor_speed.set(MOTOR_INIT); //motor_speed_val = MOTOR_INIT;
+		LD.setNumber(44);
+		//reverse_count=8;
+	}
+	else if (reverse_count == 10)
+	{
+		LD.setNumber(22);
+		motor_speed.set(REVERSE);
+		reverse_count=0;
+		LE.off(1);
+	}
+	reverse_count++;
 }
 
 int orienttype() {
@@ -127,15 +128,21 @@ uint32_t getcurrrps() {
 	return curr_rps;
 }
 
-uint32_t getreqrps(){
+int getreqrps(){
 	return req_rps;
 }
 
 float feedback() {
 	//pass orientation, req_rps and curr_rps as parameters
-	if (getreqrps()!=0) {
+	//int required_rps=getreqrps();
+	if(motor_speed_val>20)
+		motor_speed_val=20;
+	else if(motor_speed_val<17)
+		motor_speed_val=17;
+
+	if (req_rps!=0) {
 		if (orienttype() == invalid) {
-			int diff = getreqrps() - getcurrrps();
+			int diff = req_rps - getcurrrps();
 			if (diff > 5)
 				motor_speed_val += 0.5;
 			else if (diff > 3.5 && diff <= 5)
@@ -147,7 +154,7 @@ float feedback() {
 			else if (diff < (-2))
 				motor_speed_val -= 0.05;
 		} else if (orient == uphill) {
-			int diff = getreqrps() - getcurrrps();
+			int diff = req_rps - getcurrrps();
 			if (diff > 5)
 				motor_speed_val = 19.3;
 			else if (diff > 3.5 && diff <= 5)
@@ -159,7 +166,7 @@ float feedback() {
 			else if (diff < (-2))
 				motor_speed_val -= 0.05;
 		} else if (orient == downhill) {
-			int diff = getcurrrps() - getreqrps();
+			int diff = getcurrrps() - req_rps;
 			if (diff > 8)
 				motor_speed_val = 18.3;
 			else if (diff > 4)
@@ -182,13 +189,17 @@ void maintainspeed() {
 	calculate_speed();
 	feedback();
 	car.setRevolutions(0);
-
 	//get kph and send it to CAN separately
 }
 
 void calc_orientation() {
+
+	if(reverse_flag)
+		reverse_init();
+
 	tilt_x = AS.getX();
 	tilt_y=AS.getY();
+
 	if(tilt_x>46) {  //&& tilt_x>tilt_y  //old value - x>76
 		//uphill
 		LE.off(1);
@@ -210,7 +221,6 @@ void calc_orientation() {
 		orient=invalid;
 		LE.toggle(2);
 	}
-
 	//return value for unit testing
 }
 
@@ -259,41 +269,42 @@ bool recieveanddecode(uint8_t*a, uint8_t*b) {
 
 int getrps(uint8_t speed_curr) {
 	if (car.getspeed() != speed_curr) {
-	/*	if (brake_flag) {
-			motor_speed_val = MOTOR_INIT;
-			brake_flag = false;
-		}
-		if (car.getspeed() == 2)
-			motor_init_flag = true;*/
+		if (reverse_flag)
+			motor_speed.set(18.6);
 		switch (speed_curr) {
 		case 0:
 			//reverse
+			req_rps = 0;
 			reverse_flag = true;
 			reverse_count = 5;
+			//apply_brakes();
 			break;
 		case 1:
 			//brakes
 			motor_speed_val = BRAKES;
 		//	if (reverse_flag)
 		//		motor_speed.set(MOTOR_INIT);
+			motor_speed.set(BRAKES);
 			req_rps = 0;
+			//apply_brakes();
 			reverse_flag = false;
 			brake_flag = true;
+
 			break;
 		case 2:
 			//forward slow
-		//	if (reverse_flag)
-		//		motor_speed.set(MOTOR_INIT);
+			//if (reverse_flag)
+				//motor_speed.set(MOTOR_INIT);
 			//motor_speed_val=MOTOR_INIT;
-			req_rps = 8;
+			req_rps = 6;
 			reverse_flag = false;
 			break;
 		case 3:
 			//fast
-		//	if (reverse_flag)
-		//		motor_speed.set(MOTOR_INIT);
+			//if (reverse_flag)
+				//motor_speed.set(MOTOR_INIT);
 			//motor_speed_val=MOTOR_INIT;
-			req_rps = 8;        //good for flat and uphill 12;
+			req_rps = 6;        //good for flat and uphill 12;
 			reverse_flag = false;
 			break;
 		case 4:
@@ -359,28 +370,23 @@ bool getcanmsg() {
 }
 
 void apply_brakes() {
-/*	if (reverse_flag) {
-//REVERSE INIT covers below
-		reverse_count++;
-		if (reverse_count <= 20)
-			reverse_init();
-		else if (reverse_count > 20)
-			motor_speed.set(REVERSE);
-
-	} else if (motor_init_flag) {
-		motor_speed.set(MOTOR_INIT);
-		motor_init_flag = false;
-	}  */
-	 if (req_rps == 0) {
+	 if ((req_rps == 0)) {
+		 if(reverse_flag)
+		 {
+			 reverse_flag = false;
+			 motor_speed.set(MOTOR_INIT);
+		 }
+		 else
+		 {
 	        motor_speed.set(BRAKES);
-	        motor_speed_val = 18.6;
-	        car.setmotorspeed(motor_speed_val);
 	    }
+		 motor_speed_val = 18.9;
+		 car.setmotorspeed(motor_speed_val);
+	 }
 }
 void setmotorPWM() {
 	getcanmsg();
 	checkmia();//put directly, function not req
 	motor_dir.set(car.getmotordir());
-	apply_brakes();
 }
 

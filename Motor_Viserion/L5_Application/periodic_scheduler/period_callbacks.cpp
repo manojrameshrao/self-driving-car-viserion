@@ -78,6 +78,16 @@ void period_1Hz(uint32_t count) {
 }
 void period_10Hz(uint32_t count) {
 	calc_orientation();
+//	bool brake_flag=false,reverse_flag=false;
+//		if(SW.getSwitch(1)){
+//					brake_flag=true;
+//					apply_brakes();
+//					reverse_flag=false;
+//				}else if(SW.getSwitch(2)){
+//					reverse_flag=true;
+//					brake_flag=false;
+//					reverse_init();
+//				}
 }
 
 void period_100Hz(uint32_t count) {

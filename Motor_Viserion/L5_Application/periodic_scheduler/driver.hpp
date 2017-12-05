@@ -27,6 +27,7 @@ float getdir(uint8_t dir_curr);
 bool ifreverse();
 int orienttype();
 uint32_t getcurrrps();
-uint32_t getreqrps();
+int getreqrps();
+void reverse_init();
 
 #endif /* DRIVER_HPP_ */
