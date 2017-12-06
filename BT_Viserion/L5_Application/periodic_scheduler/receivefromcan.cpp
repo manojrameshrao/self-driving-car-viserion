@@ -6,6 +6,9 @@
 #include <iostream>
 #include "bluetoothtransmission.h"
 #include "display.hpp"
+#include <stdio.h>
+#include <math.h>
+#include    <stdlib.h>
 
 
 #include <string.h>
@@ -16,10 +19,17 @@ SEND_GEO_ANGLES_t send_compass_dir={0};
 MOTOR_STATUS_t speed ={0};
 SENSORS_VALUES_t sensor_values={0};
 
+double slatt;
+double slongi;
+
 int sensor_left=0;
 int sensor_right=0;
 int sensor_middle=0;
 int sensor_rear=0;
+
+char slatti[9];
+char slongii[11];
+char send[21];
 
 int count =0;
 int comp=0;
@@ -45,7 +55,7 @@ void receiveallcanmsges(Uart3 & u3){
 				sensor_right=sensor_values.SENSOR_right_in;
 				sensor_middle = sensor_values.SENSOR_middle_in;
 
-				setSENSOR_LEFT_INIT(sensor_left);
+				setSENSOR_LEFT_INIT(100);
 
 
 			}
@@ -53,10 +63,21 @@ void receiveallcanmsges(Uart3 & u3){
 			break;
 		}
 
-		case 405:{
+		case 400:{
 
 			if(dbc_decode_SEND_COORDINATES(&send_start_co,can_msg.data.bytes,&can_msg_hdr))
 			{
+				slatt=send_start_co.SEND_LATTITUDE;
+				slongi=send_start_co.SEND_LONGITUDE;
+
+
+			   sprintf(slatti,"%f",slatt);
+			  sprintf(slongii,"%f",slongi);
+
+			   strcat(send,slatti);
+			   strcat(send,",");
+			   strcat(send,slongii);
+				u3.putline(send,portMAX_DELAY);
 				//write function for what to do when u receive coordinates from gps
 			}
 

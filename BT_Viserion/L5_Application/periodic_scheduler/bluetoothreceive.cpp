@@ -10,6 +10,9 @@
 #include <string.h>
 #include "sendoncan.h"
 #include <iostream>
+#include "_can_dbc/generated_Viserion.h"
+
+GET_START_COORDINATES_t get ={0};
 
 
 
@@ -56,6 +59,8 @@ bool recieve_cmd_from_bluetooth(Uart3& u3)
 			sendCarStop();
 		}
 
+
+
 		else if(strcmp(temp,cstop) == 0)
 				{
 			sendEndOfCoordinares();
@@ -85,9 +90,11 @@ bool recieve_cmd_from_bluetooth(Uart3& u3)
 		}
 
 		else if(strcmp(temp, point) == 0)
-				{
-					//send can msg to geo asking for coordinates
-					u3.putline(send,portMAX_DELAY);
+				{				//send can msg to geo asking for coordinates
+
+					get.GET_COORDINATES=111;
+					dbc_encode_and_send_GET_START_COORDINATES(&get);
+
 				}
 
 

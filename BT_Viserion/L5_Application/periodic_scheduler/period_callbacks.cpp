@@ -117,7 +117,7 @@ void period_100Hz(uint32_t count)
 	stats=recieve_cmd_from_bluetooth(u3);
 	receiveallcanmsges(u3);
 
-	if(count%9==0){
+	if(count%5==0){
 		xSemaphoreGive(display_sem);
 	}
 

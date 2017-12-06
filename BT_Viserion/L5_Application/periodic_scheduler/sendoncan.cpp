@@ -12,6 +12,7 @@ GET_START_COORDINATES_t start_coordinate={0};
 CHECKPOINTS_SENT_t send_complete={0};
 BT_START_CMD_t car_Start={0};
 BT_STOP_CMD_t car_Stop={0};
+SEND_NO_OF_CHECKPOINTS_t size ={0};
 
 void sendStartCoordinate(){
 	start_coordinate.GET_COORDINATES=1;
@@ -45,4 +46,10 @@ void sendCarStop(){
 	car_Stop.BT_ABORT=1;
 	dbc_encode_and_send_BT_STOP_CMD(&car_Stop);
 
+}
+
+void sendsize(int ncheck)
+{
+	//size = 50;
+	dbc_encode_and_send_SEND_NO_OF_CHECKPOINTS(&size);
 }
