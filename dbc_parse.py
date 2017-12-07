@@ -74,27 +74,25 @@ class Signal(object):
 
     # Returns the variable type (float, int, or enum) based ont he signal data range
     def get_code_var_type(self):
-        if '.' in self.scale_str:
-            return "double"
-        else:
-            if not is_empty(self.enum_info):
-                return self.name + "_E"
-
-            _max = (2 ** self.bit_size) * self.scale
-            if self.is_real_signed():
-                _max *= 2
-
-            t = "uint32_t"
-            if _max <= 256:
-                t = "uint8_t"
-            elif _max <= 65536:
-                t = "uint16_t"
-
-            # If the signal is signed, or the offset is negative, remove "u" to use "int" type.
-            if self.is_real_signed() or self.offset < 0:
-                t = t[1:]
-
-            return t
+      if self.scale_str.count(".00000")>=1:
+          return "double"
+      elif '.' in self.scale_str:
+          return "float"
+      else:
+          if not is_empty(self.enum_info):
+              return self.name + "_E"
+          _max = (2 ** self.bit_size) * self.scale
+          if self.is_real_signed():
+              _max *= 2
+          t = "uint32_t"
+          if _max <= 256:
+              t = "uint8_t"
+          elif _max <= 65536:
+              t = "uint16_t"
+          # If the signal is signed, or the offset is negative, remove "u" to use "int" type.
+          if self.is_real_signed() or self.offset < 0:
+              t = t[1:]
+          return t
 
     # Get the signal declaration with the variable type and bit size
     def get_signal_code(self):

@@ -27,10 +27,6 @@ int sensor_right=0;
 int sensor_middle=0;
 int sensor_rear=0;
 
-char slatti[9];
-char slongii[11];
-char send[21];
-
 int count =0;
 int comp=0;
 int car_speed=0;
@@ -67,6 +63,10 @@ void receiveallcanmsges(Uart3 & u3){
 
 			if(dbc_decode_SEND_COORDINATES(&send_start_co,can_msg.data.bytes,&can_msg_hdr))
 			{
+				char slatti[9];
+				char slongii[11];
+				char ssend[22]="L";
+
 				slatt=send_start_co.SEND_LATTITUDE;
 				slongi=send_start_co.SEND_LONGITUDE;
 
@@ -74,10 +74,11 @@ void receiveallcanmsges(Uart3 & u3){
 			   sprintf(slatti,"%f",slatt);
 			  sprintf(slongii,"%f",slongi);
 
-			   strcat(send,slatti);
-			   strcat(send,",");
-			   strcat(send,slongii);
-				u3.putline(send,portMAX_DELAY);
+			   strcat(ssend,slatti);
+			   strcat(ssend,",");
+			   strcat(ssend,slongii);
+				u3.putline(ssend,portMAX_DELAY);
+				cout<<send_start_co.SEND_LATTITUDE<<" "<<send_start_co.SEND_LONGITUDE<<endl;
 				//write function for what to do when u receive coordinates from gps
 			}
 

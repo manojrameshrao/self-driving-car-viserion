@@ -113,9 +113,12 @@ if(xSemaphoreTake(display_sem,0)){
 void period_100Hz(uint32_t count)
 {
 	//++count;
+
+	{
 	receiveAllCoordinates(u3);
 	stats=recieve_cmd_from_bluetooth(u3);
 	receiveallcanmsges(u3);
+	}
 
 	if(count%5==0){
 		xSemaphoreGive(display_sem);
