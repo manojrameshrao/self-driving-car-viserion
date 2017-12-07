@@ -12,9 +12,12 @@
 char buffer[200] = {0};
 char satelite[3];
 uint8_t no_sat_locked;
+char * format = NULL;
+cordinates checkpoints_array[10];
 Uart2& GPS_data = Uart2::getInstance();
 cordinates current, projection, checkpoint;
-
+bool isNumberCheckPointsReceived;
+uint8_t no_checkpoint_reached;
  /* Initializes the GPS module
  * No Function parameters
  *
@@ -24,6 +27,7 @@ void init_GPS_module()
     /*Configure the GPS in pedestrian mode*/
     GPS_data.init(115200,76,1);
     LE.off(4);
+    //GPS_ready = false;
 }
 
 /* function: convert_to_degrees
@@ -51,13 +55,13 @@ void get_GPS_data()
     char * gps_data = NULL;
     char *gps_latitude = NULL;
     char *gps_longitude = NULL;
-    char * format = NULL;
+
 
     /* Get the GPS data */
     GPS_data.gets(buffer,sizeof(buffer),0);
     char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
     int i=0;
-    printf("GPS:%s\n", buffer);
+    //printf("GPS:%s\n", buffer);
 
     /* Byte 47 and 48 holds the number of connected satellites */
     satelite[0]=buffer[46];
@@ -70,7 +74,8 @@ void get_GPS_data()
     gps_data= strtok(buffer, delimiter);
     format = gps_data;
     //printf("format:%s\n", format);
-    if(get_GNGGA_status(format) && get_satallites_status(no_sat_locked))
+    //GPS_ready = get_GNGGA_status(format) && get_satallites_status(no_sat_locked);
+    if(GPS_ready())
     //if(1)
     {
         /* Turn ON Led 1 */
@@ -89,16 +94,23 @@ void get_GPS_data()
         }
         current.latitude = convert_to_degrees(atof(gps_latitude));
         current.longitude = (-1) * convert_to_degrees(atof(gps_longitude));
-        current.latitude = 37.3382082;
-        current.longitude = -12.8863286;
+        //current.latitude = 37.3382082;
+        //current.longitude = -121.8863286;
         set_projection_data(current.latitude,current.longitude);
         //ISSS chekpoint
         set_checkpoint_data(37.336601, -121.8811567);
+//        if(isNumberCheckPointsReceived)
+//        {
+////            no_checkpoint_reached = 0;
+////            set_checkpoint_data(checkpoints_array[no_checkpoint_reached].latitude,checkpoints_array[no_checkpoint_reached].longitude);
+//
+//        }
 
     }
     else
     {
-        printf("unlocked\n");
+        /* demo purpose */
+        //printf("unlocked\n");
         /* Turn OFF led 1*/
         LE.off(1);
     }
@@ -210,13 +222,13 @@ bool get_satallites_status(uint8_t satellite)
  * Destination reached check
  * bool[out]: returns true if destination reached else false
  */
-bool destination_reached()
+bool checkpoint_reached()
 {
-    if((current.latitude <= checkpoint.latitude + 0.00002) && (current.latitude >= checkpoint.latitude - 0.00002))
+    if((current.latitude <= checkpoint.latitude + 0.00003) && (current.latitude >= checkpoint.latitude - 0.00003))
     {
-        if((current.longitude <= checkpoint.longitude + 0.00002) && (current.longitude >= checkpoint.longitude - 0.00002))
+        if((current.longitude <= checkpoint.longitude + 0.00003) && (current.longitude >= checkpoint.longitude - 0.00003))
         {
-           LE.toggle(4);
+           //LE.toggle(4);
            return true;
         }
     }
@@ -272,4 +284,9 @@ float to_radians(float value)
 float to_degrees(float value)
 {
     return (value / TO_RAD);
+}
+
+bool GPS_ready()
+{
+    return get_GNGGA_status(format) && get_satallites_status(no_sat_locked);
 }
