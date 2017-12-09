@@ -7,13 +7,17 @@
 
 #ifndef RECEIVE_SENSOR_VALUES_H_
 #define RECEIVE_SENSOR_VALUES_H_
+#include "periodic_scheduler/periodic_callback.h"
+
+//#include "_can_dbc/generated_Viserion.h"
+//#include "can.h"
+//SENSORS_VALUES_t sensor_st;
+
 
 //For Message Ids
 enum{
     Sensor_Data_Id = 101,
     Motor_Speed_Id = 203,
-    Geo_Receive_Start_Coordinates = 405//,
-    //Bt_Receive_Start_Coordinates = 503
 };
 
 //For Speed
@@ -35,8 +39,8 @@ enum{
 
 };
 
-bool receiveSensorValues(void);
-bool checkSensorValues(void);
+bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx);
+bool checkSensorValues(unsigned int speed,unsigned int direction);
 
 #endif /* RECEIVE_SENSOR_VALUES_H_ */
 /*
@@ -52,5 +56,7 @@ bool checkSensorValues(void);
     m_r = 70,
     min_l_r = 80,
     no_obstacle = 90,
+    reverse_brake = 1,
+    reverse = 2
 }
 */

@@ -28,19 +28,29 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+
 #include <Periodic_Hearbeats/receive_heartbeats.h>
 #include <Periodic_Hearbeats/send_heartbeats.h>
-#include <Sensor_Values_Received/receive_sensor_values.h>
+//#include "Sensor_Values_Received/receive_sensor_values.h"
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "can.h"
 #include "io.hpp"
+//#include "_can_dbc/generated_Viserion.h"
+#include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
 
 
 const can_t canbusno = can1;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
-const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 8);
+
+
+bool gChangeState = false;
+state_machine gCurrentState = init_car;
+
+
+uint8_t speed= brake,direction= straight;
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -54,8 +64,14 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 bool period_init(void)
 {
     CAN_init(canbusno,100,100,100,NULL,NULL);
-    CAN_reset_bus(canbusno);
     CAN_bypass_filter_accept_all_msgs();
+    CAN_reset_bus(canbusno);
+
+/*
+    gChangeState = false;
+    gCurrentState = init_car;
+*/
+
 
     return true; // Must return true upon success
 }
@@ -79,44 +95,91 @@ void period_1Hz(uint32_t count)
     {
         CAN_reset_bus(canbusno);
     }
-    receive_heartbeats(canbusno,1000);
-  //  send_heartbeat(canbusno);
-/*
-    if(send_heartbeat(canbusno))
-    {
-       // LD.setNumber(11);
-    }
-    else
-    {
-        //LD.setNumber(0);
-    }
-   // LE.toggle(1);
-*/
+    //receive_heartbeats(canbusno,1000);
+
 }
 
 void period_10Hz(uint32_t count)
 {
-   //receive_heartbeats(canbusno,100);
-   // LE.toggle(2);
 
 }
 
 void period_100Hz(uint32_t count)
 {
-/*    static bool motorInit = false;
-    if(!motorInit)
+    can_msg_t can_msg = {0};
+    dbc_msg_hdr_t msgRx = {0};
+    if(CAN_rx(can1, &can_msg, 0))
     {
-        transmit_to_motor(3,0);
-        delay_ms(2);
-        transmit_to_motor(2,0);
-        motorInit = true;
+        if(can_msg.msg_id == 405)
+        {
+            gCurrentState= dest_reached;
+            gChangeState = false;
+        }
+        switch(gCurrentState)
+        {
+            case init_car:
+                wait_for_start(&can_msg,&msgRx);
+                if(gChangeState)
+                {
+                    gCurrentState = send_start;
+                }
+                break;
+            case send_start:
+                gChangeState = false;
+                send_start_signal();
+                if(gChangeState)
+                {
+                    gCurrentState = get_distance_heading;
+                }
+                break;
+            case get_distance_heading:
+                gChangeState = false;
+                take_decision(&can_msg,&msgRx);
+                if(gChangeState)
+                {
+                    gCurrentState = get_sensor_vals;
+                }
+                break;
+            case get_sensor_vals:
+                gChangeState = false;
+                receiveSensorValues(speed,direction,&can_msg,&msgRx);
+                if(gChangeState)
+                {
+                    gCurrentState = get_distance_heading;
+                }
+                break;
+            case dest_reached:
+                transmit_to_motor(brake,straight);
+                break;
+            case abort_mission:
+                break;
+            case gps_no_lock:
+                break;
+        }
     }
-    else
+
+/*
+    can_msg_t can_msg = {0};
+    dbc_msg_hdr_t msgRx = {0};
+    if(CAN_rx(can1, &can_msg, 0))
     {
-        receiveSensorValues();
+        msgRx.dlc = can_msg.frame_fields.data_len;
+        msgRx.mid = can_msg.msg_id;
+        switch(msgRx.mid)
+        {
+            case Sensor_Data_Id :
+                dbc_decode_SENSORS_VALUES(&sensor_st, can_msg.data.bytes, &msgRx);
+                LE.set(2, 1);
+                checkSensorValues();
+                break;
+        }
     }
+
 */
-    receiveSensorValues();
+
+
+
+   // receiveSensorValues();
     // LE.toggle(3);
 }
 
@@ -126,3 +189,305 @@ void period_1000Hz(uint32_t count)
 {
    // LE.toggle(4);
 }
+
+
+
+bool wait_for_start(can_msg_t *crx,dbc_msg_hdr_t *rx)
+{
+    if(crx->msg_id == 83)
+    {
+        gChangeState = true;
+    }
+    return true;
+}
+
+bool send_start_signal()
+{
+    /*
+     *
+     * dbc encode sample
+    MASTER_SPEED_t motor_msg;
+    motor_msg.MASTER_Maintain_Speed = speed;
+    motor_msg.MASTER_Maintain_Direction = direction;
+    can_msg_t can_motor = {0};
+    dbc_msg_hdr_t msg_hdr = dbc_encode_MASTER_SPEED(can_motor.data.bytes, &motor_msg);
+    can_motor.msg_id = msg_hdr.mid;
+    can_motor.frame_fields.data_len = msg_hdr.dlc;
+
+    return CAN_tx(can1, &can_motor, 0);
+    */
+
+    MASTER_START_CMD_t start_msg;
+    start_msg.CAR_INIT =1; //Dont care
+    can_msg_t can_start = {0};
+
+
+    dbc_msg_hdr_t msg_hdr = dbc_encode_MASTER_START_CMD(can_start.data.bytes,&start_msg);
+
+    can_start.msg_id = msg_hdr.mid;
+    can_start.frame_fields.data_len = msg_hdr.dlc;
+    if(CAN_tx(can1,&can_start,0))
+    {
+        gChangeState = true;
+    }
+
+    return true;
+}
+
+bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx)
+{
+    SEND_GEO_ANGLES_t geo_msg={0};
+    if(crx->msg_id == 401)
+    {
+        dbc_decode_SEND_GEO_ANGLES(&geo_msg,crx->data.bytes,rx);
+        int angle_diff =0,heading=0,bearing=0,dist=0;
+        heading = geo_msg.SEND_HEAD;
+        bearing = geo_msg.SEND_BEAR;
+        dist = geo_msg.SEND_DIST_CHKPOINT;
+
+/*
+        if(dist == 0)
+        {
+            //stop
+        }
+        else
+*/
+        {
+            if(heading>180)
+            {
+                heading-=360;
+            }
+            angle_diff = bearing - heading;
+
+            if(angle_diff > 10 && angle_diff > 90) // use #define
+            {
+                speed = slow;
+                direction = full_right;
+            }
+            else if(angle_diff > 10 && angle_diff < 90)
+            {
+                speed = slow;
+                direction = slight_right;
+            }
+            else if(angle_diff < -10 && angle_diff < -90)
+            {
+                speed = slow;
+                direction = full_left;
+            }
+            else if(angle_diff < -10 && angle_diff > -90)
+            {
+                speed = slow;
+                direction = slight_left;
+            }
+            else
+            {
+                speed = medium;
+                direction = straight;
+            }
+        }
+        gChangeState = true;
+    }
+
+
+   return true;
+}
+
+// **************************************///////////////////
+// SENSOR CODE//
+
+const uint32_t                             SENSORS_VALUES__MIA_MS  = {2000};
+const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,255};
+
+SENSORS_VALUES_t sensor_st = {0};
+
+#define CORNER_DIST 30  //25 - Previous Commit Values
+#define MIDDLE_DIST 35 //25 - Previous Commit Values
+#define REAR_DIST   20 // Not sure
+
+#define MIN_MIDDLE_DIST 10
+#define MIN_CORNER_DIST 15
+#define MIN_REAR_DIST
+
+bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx)
+{
+    can_msg_t can_msg = {0};
+    dbc_msg_hdr_t msgRx = {0};
+    //if(CAN_rx(can1, &can_msg, 0))
+    {
+        msgRx.dlc = can_msg.frame_fields.data_len;
+        msgRx.mid = can_msg.msg_id;
+
+        rx->dlc = crx->frame_fields.data_len;
+        rx->mid = crx->msg_id;
+
+        switch(rx->mid)
+        {
+            case Sensor_Data_Id :
+                if(dbc_decode_SENSORS_VALUES(&sensor_st, can_msg.data.bytes, &msgRx))
+                {
+                    LE.set(2, 1);
+                    checkSensorValues(speed,direction);
+                }
+                break;
+        }
+    }
+    if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 10))
+    {
+        transmit_to_motor(brake,straight); //should be brake
+        LD.setNumber(19);
+        LE.set(2, 0);
+    }
+    return true;
+}
+
+bool checkSensorValues(uint8_t speed,uint8_t direction)
+{
+    static uint64_t isReverse = 0;
+    static uint8_t prev_speed = 0;
+    bool waitReverse = false;
+    //uint8_t speed = 0;
+   // uint8_t direction = 0;
+
+    if(sensor_st.SENSOR_middle_in <= MIN_MIDDLE_DIST) //if middle : 0 to 10
+    {
+        LD.setNumber(5);
+        speed = brake; //1
+        direction = straight; //0
+        isReverse++;
+    /*    if(sensor_st.SENSOR_back_in <= REAR_DIST)
+        {
+            waitReverse = false;
+        }
+        else*/
+        {
+            waitReverse = true;
+        }
+
+    }
+    else if(sensor_st.SENSOR_middle_in > MIN_MIDDLE_DIST && sensor_st.SENSOR_middle_in <= MIDDLE_DIST) //middle detected 11 - 25
+    {
+        if(sensor_st.SENSOR_left_in <= CORNER_DIST && sensor_st.SENSOR_right_in <= CORNER_DIST )
+        {
+            //left(0-25) + middle(11 - 25) + right(0-25)
+            LD.setNumber(60);
+            speed = brake; // 1
+            direction = straight; //0
+            isReverse++;
+            /*if(sensor_st.SENSOR_back_in <= REAR_DIST)
+            {
+                waitReverse = false;
+            }
+            else*/
+            {
+                waitReverse = true;
+            }
+
+        }
+        else if(sensor_st.SENSOR_right_in <= CORNER_DIST) // right(0 - 25) + middle(11 - 25)
+        {
+            LD.setNumber(70);
+            speed = slow; //2
+            direction = full_left; //1
+        }
+        else if(sensor_st.SENSOR_left_in <= CORNER_DIST)  //left(0 - 25) + middle (11 -25)
+        {
+            LD.setNumber(50);
+            speed = slow; //2
+            direction = full_right; //3
+        }
+        else //middle(11 - 25)
+        {
+            LD.setNumber(20);
+            speed = slow; //slow, 2
+            direction = slight_left; //2
+        }
+    }
+    else // (middle > 25)
+    {
+       /*if(sensor_st.SENSOR_left_in <= MIN_CORNER_DIST && sensor_st.SENSOR_right_in <= MIN_CORNER_DIST)
+        {
+            //LD.setNumber(80);
+            speed = brake; //1
+            direction = straight; //0
+        }*/
+        if(sensor_st.SENSOR_right_in <= CORNER_DIST && sensor_st.SENSOR_left_in <= CORNER_DIST)
+        {
+            // middle(25 - 256), left(0 - 25), right(0 - 25)
+            LD.setNumber(40);
+            speed = slow;      //2
+            direction = straight; //0
+        }
+        else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
+        {
+            //middle(> 25), left(> 25), right(0 - 25)
+            LD.setNumber(30);
+            speed = slow; //2
+            direction = slight_left; //2
+        }
+        else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
+        {
+            //middle(> 25), left(0 - 25), right(> 25)
+            LD.setNumber(10);
+            speed = slow; //2
+            direction = slight_right; //4
+        }
+        else
+        {
+            //middle,left, right (> 25)
+            LD.setNumber(90);
+            speed = medium; //3
+            direction = straight; //0
+        }
+    }
+    if(!waitReverse)
+    {
+       if(prev_speed > reverse) //for brake, slow, medium, fast
+        {
+           transmit_to_motor(speed, direction);
+           prev_speed = speed;
+        }
+        else //prev_speed == reverse
+        {
+            if(sensor_st.SENSOR_left_in >= sensor_st.SENSOR_right_in)
+            {
+                transmit_to_motor(slow, slight_left);
+                prev_speed = slow;
+            }
+            else if(sensor_st.SENSOR_left_in < sensor_st.SENSOR_right_in)
+            {
+                transmit_to_motor(slow, slight_right);
+                prev_speed = slow;
+            }
+        }
+        isReverse = 0;
+        LE.off(4);
+    }
+    else //reverse detected
+    {
+        if(isReverse == 1)
+        {
+            transmit_to_motor(brake, straight);
+            prev_speed = brake; //added to compare with previous values
+            LD.setNumber(1);
+        }
+        else
+        {
+            transmit_to_motor(reverse, straight);
+            LE.on(4);
+            prev_speed = reverse; //added to compare with previous values
+            LD.setNumber(2);
+        }
+     }
+
+    gChangeState = true;
+    return true;
+}
+
+
+
+
+
+
+
+
+
