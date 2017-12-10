@@ -110,9 +110,9 @@ void period_100Hz(uint32_t count)
     dbc_msg_hdr_t msgRx = {0};
     if(CAN_rx(can1, &can_msg, 0))
     {
-        if(can_msg.msg_id == 405)
+        if(can_msg.msg_id == 405 || can_msg.msg_id == 84)
         {
-            gCurrentState= dest_reached;
+            gCurrentState= stop_car;
             gChangeState = false;
         }
         switch(gCurrentState)
@@ -148,7 +148,7 @@ void period_100Hz(uint32_t count)
                     gCurrentState = get_distance_heading;
                 }
                 break;
-            case dest_reached:
+            case stop_car:
                 transmit_to_motor(brake,straight);
                 break;
             case abort_mission:
@@ -308,7 +308,7 @@ SENSORS_VALUES_t sensor_st = {0};
 #define MIN_CORNER_DIST 15
 #define MIN_REAR_DIST
 
-bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx)
+bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg_hdr_t *rx)
 {
     can_msg_t can_msg = {0};
     dbc_msg_hdr_t msgRx = {0};
@@ -326,7 +326,7 @@ bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *cr
                 if(dbc_decode_SENSORS_VALUES(&sensor_st, can_msg.data.bytes, &msgRx))
                 {
                     LE.set(2, 1);
-                    checkSensorValues(speed,direction);
+                    checkSensorValues(sp,dir);
                 }
                 break;
         }
@@ -340,7 +340,7 @@ bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *cr
     return true;
 }
 
-bool checkSensorValues(uint8_t speed,uint8_t direction)
+bool checkSensorValues(uint8_t sp,uint8_t dir)
 {
     static uint64_t isReverse = 0;
     static uint8_t prev_speed = 0;
@@ -351,8 +351,8 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
     if(sensor_st.SENSOR_middle_in <= MIN_MIDDLE_DIST) //if middle : 0 to 10
     {
         LD.setNumber(5);
-        speed = brake; //1
-        direction = straight; //0
+        sp = brake; //1
+        dir = straight; //0
         isReverse++;
     /*    if(sensor_st.SENSOR_back_in <= REAR_DIST)
         {
@@ -370,8 +370,8 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
         {
             //left(0-25) + middle(11 - 25) + right(0-25)
             LD.setNumber(60);
-            speed = brake; // 1
-            direction = straight; //0
+            sp = brake; // 1
+            dir = straight; //0
             isReverse++;
             /*if(sensor_st.SENSOR_back_in <= REAR_DIST)
             {
@@ -386,20 +386,20 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST) // right(0 - 25) + middle(11 - 25)
         {
             LD.setNumber(70);
-            speed = slow; //2
-            direction = full_left; //1
+            sp = slow; //2
+            dir = full_left; //1
         }
         else if(sensor_st.SENSOR_left_in <= CORNER_DIST)  //left(0 - 25) + middle (11 -25)
         {
             LD.setNumber(50);
-            speed = slow; //2
-            direction = full_right; //3
+            sp = slow; //2
+            dir = full_right; //3
         }
         else //middle(11 - 25)
         {
             LD.setNumber(20);
-            speed = slow; //slow, 2
-            direction = slight_left; //2
+            sp = slow; //slow, 2
+            dir = slight_left; //2
         }
     }
     else // (middle > 25)
@@ -414,37 +414,37 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
         {
             // middle(25 - 256), left(0 - 25), right(0 - 25)
             LD.setNumber(40);
-            speed = slow;      //2
-            direction = straight; //0
+            sp = slow;      //2
+            dir = straight; //0
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST)
         {
             //middle(> 25), left(> 25), right(0 - 25)
             LD.setNumber(30);
-            speed = slow; //2
-            direction = slight_left; //2
+            sp = slow; //2
+            dir = slight_left; //2
         }
         else if(sensor_st.SENSOR_left_in <= CORNER_DIST)
         {
             //middle(> 25), left(0 - 25), right(> 25)
             LD.setNumber(10);
-            speed = slow; //2
-            direction = slight_right; //4
+            sp = slow; //2
+            dir = slight_right; //4
         }
         else
         {
             //middle,left, right (> 25)
             LD.setNumber(90);
-            speed = medium; //3
-            direction = straight; //0
+            sp = medium; //3
+            dir = straight; //0
         }
     }
     if(!waitReverse)
     {
        if(prev_speed > reverse) //for brake, slow, medium, fast
         {
-           transmit_to_motor(speed, direction);
-           prev_speed = speed;
+           transmit_to_motor(sp, dir);
+           prev_speed = sp;
         }
         else //prev_speed == reverse
         {

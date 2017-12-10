@@ -35,7 +35,7 @@ typedef enum
     send_start,
     get_distance_heading,
     get_sensor_vals,
-    dest_reached,
+    stop_car,
     abort_mission,
     gps_no_lock
 }state_machine;
