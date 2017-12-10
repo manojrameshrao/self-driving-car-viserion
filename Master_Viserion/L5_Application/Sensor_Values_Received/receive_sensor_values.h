@@ -7,12 +7,16 @@
 
 #ifndef RECEIVE_SENSOR_VALUES_H_
 #define RECEIVE_SENSOR_VALUES_H_
-#include "periodic_scheduler/periodic_callback.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-//#include "_can_dbc/generated_Viserion.h"
-//#include "can.h"
+//#include "periodic_scheduler/periodic_callback.h"
+
+#include "_can_dbc/generated_Viserion.h"
+#include "can.h"
+
 //SENSORS_VALUES_t sensor_st;
-
 
 //For Message Ids
 enum{
@@ -39,9 +43,11 @@ enum{
 
 };
 
-bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx);
+bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg_hdr_t *rx);
 bool checkSensorValues(unsigned int speed,unsigned int direction);
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* RECEIVE_SENSOR_VALUES_H_ */
 /*
 //For LD Indicators

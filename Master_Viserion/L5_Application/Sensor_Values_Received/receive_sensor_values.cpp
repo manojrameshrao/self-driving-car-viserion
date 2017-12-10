@@ -4,11 +4,11 @@
  *  Created on: 28-Oct-2017
  *      Author: Admin
  */
+#include <CommonHeader/commonVariables.h>
+#include "receive_sensor_values.h"
 #include "Sensor_Values_Received/receive_sensor_values.h"
 #include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
 #include <Periodic_Hearbeats/receive_heartbeats.h>
-#include "_can_dbc/generated_Viserion.h"
-#include "can.h"
 #include "io.hpp"
 
 const uint32_t                             SENSORS_VALUES__MIA_MS  = {2000};
@@ -24,8 +24,10 @@ SENSORS_VALUES_t sensor_st = {0};
 #define MIN_CORNER_DIST 15
 #define MIN_REAR_DIST
 
-bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx)
+bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg_hdr_t *rx)
 {
+    uint8_t speed = 0; //only for compilation
+    uint8_t direction = 0; //only for compilation
     can_msg_t can_msg = {0};
     dbc_msg_hdr_t msgRx = {0};
     //if(CAN_rx(can1, &can_msg, 0))
@@ -194,5 +196,6 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
             LD.setNumber(2);
         }
      }
+    gChangeState = true;
     return true;
 }

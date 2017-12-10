@@ -29,14 +29,20 @@
  */
 
 
+#include <CommonHeader/commonVariables.h>
 #include <Periodic_Hearbeats/receive_heartbeats.h>
 #include <Periodic_Hearbeats/send_heartbeats.h>
 //#include "Sensor_Values_Received/receive_sensor_values.h"
+#include "Geo_Values_Received/geo_find_directions.h"
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-#include "can.h"
 #include "io.hpp"
+
+bool wait_for_start(can_msg_t *crx,dbc_msg_hdr_t *rx);
+bool send_start_signal();
+//bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx);
+
 //#include "_can_dbc/generated_Viserion.h"
 #include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
 
@@ -234,67 +240,10 @@ bool send_start_signal()
     return true;
 }
 
-bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx)
-{
-    SEND_GEO_ANGLES_t geo_msg={0};
-    if(crx->msg_id == 401)
-    {
-        dbc_decode_SEND_GEO_ANGLES(&geo_msg,crx->data.bytes,rx);
-        int angle_diff =0,heading=0,bearing=0,dist=0;
-        heading = geo_msg.SEND_HEAD;
-        bearing = geo_msg.SEND_BEAR;
-        dist = geo_msg.SEND_DIST_CHKPOINT;
-
-/*
-        if(dist == 0)
-        {
-            //stop
-        }
-        else
-*/
-        {
-            if(heading>180)
-            {
-                heading-=360;
-            }
-            angle_diff = bearing - heading;
-
-            if(angle_diff > 10 && angle_diff > 90) // use #define
-            {
-                speed = slow;
-                direction = full_right;
-            }
-            else if(angle_diff > 10 && angle_diff < 90)
-            {
-                speed = slow;
-                direction = slight_right;
-            }
-            else if(angle_diff < -10 && angle_diff < -90)
-            {
-                speed = slow;
-                direction = full_left;
-            }
-            else if(angle_diff < -10 && angle_diff > -90)
-            {
-                speed = slow;
-                direction = slight_left;
-            }
-            else
-            {
-                speed = medium;
-                direction = straight;
-            }
-        }
-        gChangeState = true;
-    }
-
-
-   return true;
-}
 
 // **************************************///////////////////
 // SENSOR CODE//
-
+/*
 const uint32_t                             SENSORS_VALUES__MIA_MS  = {2000};
 const SENSORS_VALUES_t                     SENSORS_VALUES__MIA_MSG = {255,255,255};
 
@@ -307,6 +256,7 @@ SENSORS_VALUES_t sensor_st = {0};
 #define MIN_MIDDLE_DIST 10
 #define MIN_CORNER_DIST 15
 #define MIN_REAR_DIST
+
 
 bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg_hdr_t *rx)
 {
@@ -340,11 +290,14 @@ bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg
     return true;
 }
 
+*/
+/*
 bool checkSensorValues(uint8_t sp,uint8_t dir)
 {
     static uint64_t isReverse = 0;
     static uint8_t prev_speed = 0;
     bool waitReverse = false;
+
     //uint8_t speed = 0;
    // uint8_t direction = 0;
 
@@ -354,11 +307,12 @@ bool checkSensorValues(uint8_t sp,uint8_t dir)
         sp = brake; //1
         dir = straight; //0
         isReverse++;
-    /*    if(sensor_st.SENSOR_back_in <= REAR_DIST)
+*/      /*    if(sensor_st.SENSOR_back_in <= REAR_DIST)
         {
             waitReverse = false;
         }
         else*/
+/*
         {
             waitReverse = true;
         }
@@ -373,11 +327,11 @@ bool checkSensorValues(uint8_t sp,uint8_t dir)
             sp = brake; // 1
             dir = straight; //0
             isReverse++;
-            /*if(sensor_st.SENSOR_back_in <= REAR_DIST)
+            if(sensor_st.SENSOR_back_in <= REAR_DIST)
             {
                 waitReverse = false;
             }
-            else*/
+            else
             {
                 waitReverse = true;
             }
@@ -404,12 +358,12 @@ bool checkSensorValues(uint8_t sp,uint8_t dir)
     }
     else // (middle > 25)
     {
-       /*if(sensor_st.SENSOR_left_in <= MIN_CORNER_DIST && sensor_st.SENSOR_right_in <= MIN_CORNER_DIST)
+       if(sensor_st.SENSOR_left_in <= MIN_CORNER_DIST && sensor_st.SENSOR_right_in <= MIN_CORNER_DIST)
         {
             //LD.setNumber(80);
             speed = brake; //1
             direction = straight; //0
-        }*/
+        }
         if(sensor_st.SENSOR_right_in <= CORNER_DIST && sensor_st.SENSOR_left_in <= CORNER_DIST)
         {
             // middle(25 - 256), left(0 - 25), right(0 - 25)
@@ -482,7 +436,7 @@ bool checkSensorValues(uint8_t sp,uint8_t dir)
     gChangeState = true;
     return true;
 }
-
+*/
 
 
 
