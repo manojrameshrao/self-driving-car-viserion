@@ -7,17 +7,41 @@
 **/
  /*Add dependent headers*/
 #include "GPS.h"
+#include "generated_Viserion.h"
 
 /*Global definitions*/
 char buffer[200] = {0};
 char satelite[3];
 uint8_t no_sat_locked;
 char * format = NULL;
-cordinates checkpoints_array[10];
 Uart2& GPS_data = Uart2::getInstance();
 cordinates current, projection, checkpoint;
 bool isNumberCheckPointsReceived;
-uint8_t no_checkpoint_reached;
+//static bool allCordinatesReceived = false;
+//static uint8_t no_checkpoint_reached = 0;
+static unsigned int checkpoint_index =0;
+static unsigned int sendCordinate = false;
+static unsigned int allCheckpointsCorrectlyReceived = false;
+SEND_GEO_NOT_READY_t geo_not_ready;
+SEND_COORDINATES_t current_coordinates;
+
+struct checkpoints{
+     double latitude =0;
+     double longitude =0;
+}checkpoints_BT[20];
+
+
+/* variable to receive CAN message */
+//can_msg_t can_received_message;
+dbc_msg_hdr_t can_received_message_header;
+
+/* communication with BT-moudle */
+SEND_NO_OF_CHECKPOINTS_t no_of_checkpoints;
+COORDINATES_SENT_t cordinates_sent;
+SEND_R_COORDINATES_t checkpoints;
+MASTER_START_CMD_t start;
+ALL_CHECKPOINTS_RECEIVED_t all_received;
+
  /* Initializes the GPS module
  * No Function parameters
  *
@@ -27,6 +51,7 @@ void init_GPS_module()
     /*Configure the GPS in pedestrian mode*/
     GPS_data.init(115200,76,1);
     LE.off(4);
+    LE.off(2);
     //GPS_ready = false;
 }
 
@@ -55,6 +80,7 @@ void get_GPS_data()
     char * gps_data = NULL;
     char *gps_latitude = NULL;
     char *gps_longitude = NULL;
+    static uint8_t no_checkpoint_next = 0;
 
 
     /* Get the GPS data */
@@ -99,12 +125,11 @@ void get_GPS_data()
         set_projection_data(current.latitude,current.longitude);
         //ISSS chekpoint
         set_checkpoint_data(37.336601, -121.8811567);
-//        if(isNumberCheckPointsReceived)
-//        {
-////            no_checkpoint_reached = 0;
-////            set_checkpoint_data(checkpoints_array[no_checkpoint_reached].latitude,checkpoints_array[no_checkpoint_reached].longitude);
-//
-//        }
+        if(no_checkpoint_next == 0)
+            set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
+        if(checkpoint_reached())
+            set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
+            no_checkpoint_next++;
 
     }
     else
@@ -194,9 +219,9 @@ float get_bearing_angle()
  * bool[out]: returns true if $GNGGA format
  */
 /*Check $GNGGA format*/
-bool get_GNGGA_status(char * format)
+bool get_GNGGA_status(char * GPSFormat)
 {
-    if(strcmp(format,"$GNGGA") == 0)
+    if(strcmp(GPSFormat,"$GNGGA") == 0)
         return true;
     else
         return false;
@@ -233,6 +258,24 @@ bool checkpoint_reached()
         }
     }
     return false;
+}
+
+/* function: destination_reached
+ * Send 1 if final destination has reached else 0
+ * Bool[out]: returns true if reached else false
+ */
+bool destination_reached()
+{
+    if((current.latitude <= checkpoints_BT[checkpoint_index].latitude + 0.00003) && (current.latitude >= checkpoints_BT[checkpoint_index].latitude - 0.00003))
+    {
+        if((current.longitude <= checkpoints_BT[checkpoint_index].longitude + 0.00003) && (current.longitude >= checkpoints_BT[checkpoint_index].longitude - 0.00003))
+        {
+           //LE.toggle(4);
+           return true;
+        }
+    }
+    return false;
+
 }
 
 /* function: get_bearing_angle_haversine
@@ -286,7 +329,124 @@ float to_degrees(float value)
     return (value / TO_RAD);
 }
 
+/* function: GPS_ready
+ * Check if the GPS is ready to communicate
+ * Degree value[out]: return 0 or 1 based on output
+ */
 bool GPS_ready()
 {
     return get_GNGGA_status(format) && get_satallites_status(no_sat_locked);
 }
+
+/* function: send_current_cordinates
+ * Send coordinates if flag is true else send not ready signal
+ */
+void send_current_cordinates(bool flag)
+{
+    if(flag)
+    {
+        /* Send msg 400 to send the current GPS coordinate*/
+        current_coordinates.SEND_LATTITUDE = current.latitude;
+        current_coordinates.SEND_LONGITUDE = current.longitude;
+        dbc_encode_and_send_SEND_COORDINATES(&current_coordinates);
+    }
+
+    else
+    {
+        /*  Send msg 406 to send GPS_NOT_READY signal*/
+        geo_not_ready.GPS_NOT_READY = 0;
+        dbc_encode_and_send_SEND_GEO_NOT_READY(&geo_not_ready);
+    }
+    sendCordinate = false;
+}
+
+/* function: send_all_chekpoints_received
+ * Send all_chekpoints_received signal to master with 1 if flag is true else send with 0
+ */
+void send_all_chekpoints_received(bool flag)
+{
+    if(flag)
+    {
+        /*  Send msg 404 with data as 1*/
+        all_received.GEO_CHECKPOINTS_READY = 1;
+        dbc_encode_and_send_ALL_CHECKPOINTS_RECEIVED(&all_received);
+    }
+    else
+    {
+        /*  Send msg 404 with data as 0*/
+        all_received.GEO_CHECKPOINTS_READY = 0;
+        dbc_encode_and_send_ALL_CHECKPOINTS_RECEIVED(&all_received);
+    }
+
+}
+/* function: GPS_ready
+ * Check if the GPS is ready to communicate
+ * Degree value[out]: return 0 or 1 based on output
+ */
+bool GPS_receive_data_processing(can_msg_t can_received_message)
+{
+    //static bool isAllCheckPointsReceived = false;
+    static bool start_flag = false;
+    switch(can_received_message.msg_id)
+    {
+        /*  BT sends get_start_cordinate to receive the current GPS coordinates*/
+        case 500:
+            if(GPS_ready())
+                sendCordinate = true;
+            /* Send msg 400 or 406 based on sendCordinate flag*/
+            send_current_cordinates(sendCordinate);
+            break;
+
+        /*  Receive all the checkpoints from BT and store them in array*/
+        case 503:
+             dbc_decode_SEND_R_COORDINATES(&checkpoints,can_received_message.data.bytes,&can_received_message_header);
+             u0_dbg_printf("%lf",checkpoints.SET_LATTITUDE);
+             u0_dbg_printf("%lf",checkpoints.SET_LONGITUDE);
+
+             (checkpoints_BT[checkpoint_index]).latitude = checkpoints.SET_LATTITUDE;
+             (checkpoints_BT[checkpoint_index]).longitude = checkpoints.SET_LONGITUDE;
+             checkpoint_index++;
+             break;
+
+         /*  Receive number of checkpoints to the destination from BT module*/
+         case 504:
+             dbc_decode_SEND_NO_OF_CHECKPOINTS (&no_of_checkpoints,can_received_message.data.bytes,&can_received_message_header);
+             printf("number of check points received: %d",no_of_checkpoints.BT_NO_OF_COR);
+
+             if(no_of_checkpoints.BT_NO_OF_COR == checkpoint_index)
+                 allCheckpointsCorrectlyReceived = true;
+
+             /* Take action based on allCheckpointsCorrectlyReceived flag*/
+             send_all_chekpoints_received(allCheckpointsCorrectlyReceived);
+             break;
+
+        /*  Receive start from master which will send the angles*/
+        case 81:
+            start_flag = true;
+            break;
+
+        default:
+            break;
+    }
+    return start_flag;
+
+}
+
+void extract()
+{
+    /* uint32_t raw;
+         raw  = ((uint32_t)((can_received_message.data.bytes[0]))); ///< 8 bit(s) from B0
+         raw |= ((uint32_t)((can_received_message.data.bytes[1]))) << 8; ///< 8 bit(s) from B8
+         raw |= ((uint32_t)((can_received_message.data.bytes[2]))) << 16; ///< 8 bit(s) from B16
+         raw |= ((uint32_t)((can_received_message.data.bytes[3]) & 0x3f)) << 24; ///< 6 bit(s) from B24
+         checkpoints.SET_LATTITUDE = ((raw * 1e-06) + (-180));
+         raw  = ((uint32_t)((can_received_message.data.bytes[3] >> 6) & 0x03)); ///< 2 bit(s) from B30
+         raw |= ((uint32_t)((can_received_message.data.bytes[4]))) << 2; ///< 8 bit(s) from B32
+         raw |= ((uint32_t)((can_received_message.data.bytes[5]))) << 10; ///< 8 bit(s) from B40
+         raw |= ((uint32_t)((can_received_message.data.bytes[6]))) << 18; ///< 8 bit(s) from B48
+         raw |= ((uint32_t)((can_received_message.data.bytes[7]) & 0x0f)) << 26; ///< 4 bit(s) from B56
+         checkpoints.SET_LONGITUDE = ((raw * 1e-06) + (-180));*/
+
+}
+
+

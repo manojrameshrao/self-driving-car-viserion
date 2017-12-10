@@ -14,6 +14,9 @@
 #include "string.h"
 #include "io.hpp"
 #include "math.h"
+#include "can.h"
+#include "printf_lib.h"
+
 struct cordinates{
      double latitude = 0;
      double longitude = 0;
@@ -35,8 +38,12 @@ float get_bearing_angle();
 bool get_satallites_status(uint8_t satellite);
 bool get_GNGGA_status(char * format);
 bool checkpoint_reached();
+bool destination_reached();
 float to_radians(float value);
 float get_bearing_angle_haversine();
 float to_degrees(float value);
 bool GPS_ready();
+bool GPS_receive_data_processing(can_msg_t can_received_message);
+void send_current_cordinates(bool flag);
+void send_all_chekpoints_received(bool flag);
 #endif /* L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_ */
