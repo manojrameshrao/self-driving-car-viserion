@@ -248,6 +248,10 @@ void period_10Hz(uint32_t count)
             dbc_encode_and_send_SEND_COORDINATES(&current_coordinates);
             sendCordinate = false;
         }
+        else
+        {
+
+        }
     }
 }
 
