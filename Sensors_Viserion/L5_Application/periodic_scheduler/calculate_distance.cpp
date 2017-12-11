@@ -21,9 +21,9 @@ float voltage1 = 0, voltage2 = 0, voltage3 = 0;
 const float adc_step = 3.3 / 4096;
 
 /**
- * Sensors outputs analog voltage with a scaling factor of (Vcc/512) per inch. A supply of 5V yields ~9.8mV/in.
+ * Sensors outputs analog voltage with a scaling factor of (Vcc/512) per inch. A supply of 3.3V yields ~6.4mV/in.
  */
-const float voltage_scaling = 0.009765625;
+const float voltage_scaling = 0.006445;
 
 /**
  * Function that calculate distance of the obstacle.
@@ -45,8 +45,8 @@ void calculate_distance(int &l, int &r, int &m){
 
     /**
      * Since we noticed that sensors sometimes return values higher than 254 (upper border of sensors range)
-     * there is need to deal with that case. Value 25 is assigned because it is our threshold when master is informing
-     * motor what to do. Value 25 will not change value returned from filter since list is 4 elements long
+     * there is need to deal with that case. Value 26 is assigned because it is our threshold when master is informing
+     * motor what to do. Value 26 will not change value returned from filter since list is 4 elements long
      */
     if(l > 254) l = 26;
     if(m > 254) m = 26;

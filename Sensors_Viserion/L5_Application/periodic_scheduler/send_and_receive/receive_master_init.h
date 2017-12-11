@@ -9,7 +9,7 @@
 #define RECEIVE_MASTER_INIT_H_
 
 
-void receive_master_init(void);
+bool receive_master_init(bool &flag);
 
 
 #endif /* RECEIVE_MASTER_INIT_H_ */

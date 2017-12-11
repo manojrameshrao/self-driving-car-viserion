@@ -56,6 +56,7 @@ std::list<int> list_middle;
 std::list<int> list_right;
 std::list<int> list_back;
 
+//static bool flag = false;
 
 /* Calculated distances in inches will be stored here */
 int l_distance = 0, r_distance = 0, m_distance = 0, b_distance = 0;
@@ -129,8 +130,20 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-    led_on(filtered_left, filtered_middle, filtered_right, filtered_back);
-    send_sensors_data(filtered_left, filtered_right, filtered_middle, filtered_back);
+//    can_msg_t can_msg;
+//
+//    if(CAN_rx(can1, &can_msg, 0)){
+//
+//        if(can_msg.msg_id == 81)
+//            flag= true;
+//    }
+
+//    flag = receive_master_init(flag);
+//
+//    if(flag){
+        led_on(filtered_left, filtered_middle, filtered_right, filtered_back);
+        send_sensors_data(filtered_left, filtered_right, filtered_middle, filtered_back);
+//    }
 
 //    printf("Left: %d, Middle: %d, Right: %d Back: %d \n", filtered_left, filtered_middle, filtered_right, filtered_back);
 //    printf("Left: %d, Right: %d  \n", filtered_left, filtered_right);
