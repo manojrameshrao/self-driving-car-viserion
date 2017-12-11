@@ -31,16 +31,16 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "io.hpp"
+#include "uart2.hpp"
 #include "periodic_callback.h"
-
-//#include "periodic_scheduler/geoHBtx.h"
-//#include "periodic_scheduler/geoHBrx.h"
+#include "generated_Viserion.h"
 #include "GPS.h"
 #include "compass.hpp"
-#include "uart2.hpp"
-#include <stdlib.h>
-#include "generated_Viserion.h"
+
+
+
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -71,11 +71,12 @@ bool period_init(void)
     status = init_compass_serial(UART3,115200);
     if(status)
     {
-       printf("compass serial interface initialized \n");
+      // printf("compass serial interface initialized \n");
     }
     else
     {
-       printf("compass serial interface not initialized \n");
+      // printf("compass serial interface not initialized \n");
+        LE.set(3,1);
     }
 
 
@@ -83,7 +84,7 @@ bool period_init(void)
     init_GPS_module();
    // satelite[2]='\n';
     /* initialize CAN communication */
-    CAN_init(can1, 100, 10, 10, NULL, NULL);
+    CAN_init(can1, 100, 20, 20, NULL, NULL);
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
     isNumberCheckPointsReceived = false;
@@ -107,12 +108,21 @@ void period_1Hz(uint32_t count)
 {
     if(CAN_is_bus_off(can1))
     {
+            LE.set(3,1);
             CAN_reset_bus(can1);
+
     }
 }
 
 void period_10Hz(uint32_t count)
 {
+
+
+}
+
+void period_100Hz(uint32_t count)
+{
+    /* variable to hold start_message_status from master*/
     bool start = false;
 
     /*  CAN Reception */
@@ -121,12 +131,6 @@ void period_10Hz(uint32_t count)
         start = GPS_receive_data_processing(can_received_message);
         calculate_and_send_angles(start);
     }
-
-}
-
-void period_100Hz(uint32_t count)
-{
-
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
@@ -147,12 +151,12 @@ void calculate_and_send_angles(bool start)
     unsigned int  compass_head = 0;
     /* history_compass_head variable, holds the compass_head value */
     static unsigned int  history_compass_head = 0;
-    static unsigned int  history_GPS_bear = 0;
-    if(start)
-    {
-       bearing_angle = get_bearing_angle_haversine();
-       // printf("Haver:%f\n", get_bearing_angle_haversine());
+//    static unsigned int  history_GPS_bear = 0;
 
+       // printf("Haver:%f\n", get_bearing_angle_haversine());
+   if(start)
+   {
+       bearing_angle = get_bearing_angle_haversine();
        /*  get the compass head (YAW) from Razor SEN-14001*/
        status = get_compass_head(&compass_head);
        if(status)
@@ -165,8 +169,10 @@ void calculate_and_send_angles(bool start)
           /*  Indication of RAZOR SEN14001 not able to send the data*/
           compass_head = history_compass_head;
        }
-       // printf("Bearing: %f\n", bearing_angle);
-       //  printf("Heading: %d\n", compass_head);
+#ifdef DEBUG
+        printf("Bearing: %f\n", bearing_angle);
+        printf("Heading: %d\n", compass_head);
+#endif
        angles_data.SEND_HEAD = compass_head;
        angles_data.SEND_BEAR = bearing_angle;
 
@@ -184,8 +190,12 @@ void calculate_and_send_angles(bool start)
            LE.toggle(4);
            destination.GEO_DESTINATION = 1;
            dbc_encode_and_send_DESTINATION_REACHED(&destination);
-           //printf("destination reached");
        }
     }
+   else
+   {
+       /*Get GPS data if start is not available else get_bearing angle is calculating the angle*/
+         get_GPS_data();
+   }
 
 }

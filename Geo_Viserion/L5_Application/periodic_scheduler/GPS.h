@@ -29,6 +29,14 @@ extern bool isNumberCheckPointsReceived;
 extern uint8_t no_checkpoint_reached;
 extern cordinates checkpoints_array[10];
 #define TO_RAD (M_PI / 180)
+#define LATITTUDE_START_INDEX (2)
+#define LONGITUDE_START_INDEX (4)
+#define WEST_COAST (-1)
+#define EAST_COAST  (1)
+//#define TEST_STATIC
+//#define DEBUG
+
+
 void init_GPS_module();
 void get_GPS_data();
 double convert_to_degrees(double value);

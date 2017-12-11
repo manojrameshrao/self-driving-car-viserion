@@ -41,6 +41,8 @@ void period_10Hz(uint32_t count);
 void period_100Hz(uint32_t count);
 void period_1000Hz(uint32_t count);
 
+/* function combining GPS and Compass parameters */
+void calculate_and_send_angles(bool start);
 #ifdef __cplusplus
 }
 #endif

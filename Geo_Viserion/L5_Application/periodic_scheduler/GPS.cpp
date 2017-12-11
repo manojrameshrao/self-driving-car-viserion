@@ -22,6 +22,8 @@ bool isNumberCheckPointsReceived;
 static unsigned int checkpoint_index =0;
 static unsigned int sendCordinate = false;
 static unsigned int allCheckpointsCorrectlyReceived = false;
+/* variable to store START signal from Master */
+static bool start_flag = false;
 SEND_GEO_NOT_READY_t geo_not_ready;
 SEND_COORDINATES_t current_coordinates;
 
@@ -35,12 +37,14 @@ struct checkpoints{
 //can_msg_t can_received_message;
 dbc_msg_hdr_t can_received_message_header;
 
-/* communication with BT-moudle */
+/* communication with BT-module */
 SEND_NO_OF_CHECKPOINTS_t no_of_checkpoints;
 COORDINATES_SENT_t cordinates_sent;
 SEND_R_COORDINATES_t checkpoints;
-MASTER_START_CMD_t start;
 ALL_CHECKPOINTS_RECEIVED_t all_received;
+
+/* communication with master-module */
+MASTER_START_CMD_t start_command_from_master;
 
  /* Initializes the GPS module
  * No Function parameters
@@ -85,7 +89,7 @@ void get_GPS_data()
 
     /* Get the GPS data */
     GPS_data.gets(buffer,sizeof(buffer),0);
-    char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
+    //char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
     int i=0;
     //printf("GPS:%s\n", buffer);
 
@@ -102,45 +106,55 @@ void get_GPS_data()
     //printf("format:%s\n", format);
     //GPS_ready = get_GNGGA_status(format) && get_satallites_status(no_sat_locked);
     if(GPS_ready())
-    //if(1)
     {
         /* Turn ON Led 1 */
         LE.on(1);
+
+
         while (gps_data != NULL)
         {
-          gps_data = strtok (NULL, ",");
-          i++;
-          if(i==2)
-              gps_latitude = gps_data;
-          if(i==4)
-          {
-              gps_longitude = gps_data;
-              break;
-          }
+              gps_data = strtok (NULL, ",");
+              i++;
+              if(i==LATITTUDE_START_INDEX)
+                  gps_latitude = gps_data;
+              if(i==LONGITUDE_START_INDEX)
+              {
+                  gps_longitude = gps_data;
+                  break;
+              }
         }
         current.latitude = convert_to_degrees(atof(gps_latitude));
-        current.longitude = (-1) * convert_to_degrees(atof(gps_longitude));
-        //current.latitude = 37.3382082;
-        //current.longitude = -121.8863286;
-        set_projection_data(current.latitude,current.longitude);
+        current.longitude = (WEST_COAST) * convert_to_degrees(atof(gps_longitude));
+#ifdef TEST_STATIC
+        current.latitude = 37.3382082;
+        current.longitude = -121.8863286;
+       // set_projection_data(current.latitude,current.longitude);
         //ISSS chekpoint
         set_checkpoint_data(37.336601, -121.8811567);
-        if(no_checkpoint_next == 0)
-            set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
-        if(checkpoint_reached())
-            set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
-            no_checkpoint_next++;
+#endif
+        /* wait for the START signal from master */
+        if(start_flag == true)
+        {
+            /* Set the Initial check point */
+            if(no_checkpoint_next == 0)
+            {
+                set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
+            }
+            /* We have reached the checkpoint */
+            if(checkpoint_reached())
+            {
+                /* move to next checkpoint */
+                no_checkpoint_next++;
+                set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
 
+            }
+        }
     }
     else
     {
-        /* demo purpose */
-        //printf("unlocked\n");
         /* Turn OFF led 1*/
         LE.off(1);
     }
-    //printf ("gps lat:%f\n",convert_to_degrees(atof(gps_latitude)));
-   // printf ("gps long:%f\n",convert_to_degrees(atof(gps_longitude)));
 }
 
 /* function: set_projection_data
@@ -171,12 +185,12 @@ void set_checkpoint_data(double latitude, double longitude)
  */
 float get_bearing_angle()
 {
+#ifdef DEBUG
     printf ("c_lat:%f\n",current.latitude);
     printf ("c_long:%f\n",current.longitude);
-    //printf ("projection lat:%f\n",projection.latitude);
-    //printf ("projection longi:%f\n",projection.longitude);
     printf ("cp_lat:%f\n",checkpoint.latitude);
     printf ("cp_long:%f\n",checkpoint.longitude);
+#endif
     cordinates vector_CD, vector_CP;
     double dot_product = 0, mod_CD =0, mod_CP=0;
     float bearing_angle = 0;
@@ -266,12 +280,15 @@ bool checkpoint_reached()
  */
 bool destination_reached()
 {
-    if((current.latitude <= checkpoints_BT[checkpoint_index].latitude + 0.00003) && (current.latitude >= checkpoints_BT[checkpoint_index].latitude - 0.00003))
+    /* final destination */
+    uint8_t final_destination = checkpoint_index -1;
+    if((current.latitude <= checkpoints_BT[final_destination].latitude + 0.00003) && (current.latitude >= checkpoints_BT[final_destination].latitude - 0.00003))
     {
-        if((current.longitude <= checkpoints_BT[checkpoint_index].longitude + 0.00003) && (current.longitude >= checkpoints_BT[checkpoint_index].longitude - 0.00003))
+        if((current.longitude <= checkpoints_BT[final_destination].longitude + 0.00003) && (current.longitude >= checkpoints_BT[final_destination].longitude - 0.00003))
         {
-           //LE.toggle(4);
-           return true;
+            /* set the checkpoint index */
+            checkpoint_index = 0;
+            return true;
         }
     }
     return false;
@@ -335,7 +352,7 @@ float to_degrees(float value)
  */
 bool GPS_ready()
 {
-    return get_GNGGA_status(format) && get_satallites_status(no_sat_locked);
+    return (get_GNGGA_status(format) && get_satallites_status(no_sat_locked));
 }
 
 /* function: send_current_cordinates
@@ -370,11 +387,13 @@ void send_all_chekpoints_received(bool flag)
         /*  Send msg 404 with data as 1*/
         all_received.GEO_CHECKPOINTS_READY = 1;
         dbc_encode_and_send_ALL_CHECKPOINTS_RECEIVED(&all_received);
+
     }
     else
     {
         /*  Send msg 404 with data as 0*/
         all_received.GEO_CHECKPOINTS_READY = 0;
+        checkpoint_index = 0;
         dbc_encode_and_send_ALL_CHECKPOINTS_RECEIVED(&all_received);
     }
 
@@ -385,51 +404,62 @@ void send_all_chekpoints_received(bool flag)
  */
 bool GPS_receive_data_processing(can_msg_t can_received_message)
 {
-    //static bool isAllCheckPointsReceived = false;
-    static bool start_flag = false;
+
     switch(can_received_message.msg_id)
     {
         /*  BT sends get_start_cordinate to receive the current GPS coordinates*/
         case 500:
             if(GPS_ready())
+            {
+                /* GPS is ready and connected in GNGGA mode with more than 3 satellites locked */
                 sendCordinate = true;
+            }
             /* Send msg 400 or 406 based on sendCordinate flag*/
             send_current_cordinates(sendCordinate);
             break;
 
         /*  Receive all the checkpoints from BT and store them in array*/
         case 503:
-             dbc_decode_SEND_R_COORDINATES(&checkpoints,can_received_message.data.bytes,&can_received_message_header);
-             u0_dbg_printf("%lf",checkpoints.SET_LATTITUDE);
-             u0_dbg_printf("%lf",checkpoints.SET_LONGITUDE);
-
-             (checkpoints_BT[checkpoint_index]).latitude = checkpoints.SET_LATTITUDE;
-             (checkpoints_BT[checkpoint_index]).longitude = checkpoints.SET_LONGITUDE;
-             checkpoint_index++;
-             break;
+             if(dbc_decode_SEND_R_COORDINATES(&checkpoints,can_received_message.data.bytes,&can_received_message_header))
+             {
+                #ifdef DEBUG
+                 u0_dbg_printf("%lf",checkpoints.SET_LATTITUDE);
+                 u0_dbg_printf("%lf",checkpoints.SET_LONGITUDE);
+                #endif
+                 (checkpoints_BT[checkpoint_index]).latitude = checkpoints.SET_LATTITUDE;
+                 (checkpoints_BT[checkpoint_index]).longitude = checkpoints.SET_LONGITUDE;
+                 checkpoint_index++;
+             }
+                 break;
 
          /*  Receive number of checkpoints to the destination from BT module*/
          case 504:
-             dbc_decode_SEND_NO_OF_CHECKPOINTS (&no_of_checkpoints,can_received_message.data.bytes,&can_received_message_header);
-             printf("number of check points received: %d",no_of_checkpoints.BT_NO_OF_COR);
-
-             if(no_of_checkpoints.BT_NO_OF_COR == checkpoint_index)
-                 allCheckpointsCorrectlyReceived = true;
-
-             /* Take action based on allCheckpointsCorrectlyReceived flag*/
-             send_all_chekpoints_received(allCheckpointsCorrectlyReceived);
+             if (dbc_decode_SEND_NO_OF_CHECKPOINTS (&no_of_checkpoints,can_received_message.data.bytes,&can_received_message_header))
+             {
+#ifdef DEBUG
+                 printf("number of check points received: %d",no_of_checkpoints.BT_NO_OF_COR);
+#endif
+                 if(no_of_checkpoints.BT_NO_OF_COR == checkpoint_index)
+                 {
+                     allCheckpointsCorrectlyReceived = true;
+                 }
+                 /* Take action based on allCheckpointsCorrectlyReceived flag*/
+                 send_all_chekpoints_received(allCheckpointsCorrectlyReceived);
+             }
              break;
 
         /*  Receive start from master which will send the angles*/
         case 81:
-            start_flag = true;
+            if(dbc_decode_MASTER_START_CMD(&start_command_from_master,can_received_message.data.bytes,&can_received_message_header))
+            {
+               start_flag = true;
+            }
             break;
 
         default:
             break;
     }
     return start_flag;
-
 }
 
 void extract()
