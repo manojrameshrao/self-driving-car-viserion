@@ -18,8 +18,8 @@
 #include "printf_lib.h"
 
 struct cordinates{
-     double latitude = 0;
-     double longitude = 0;
+    double latitude = 0;
+    double longitude = 0;
 };
 extern Uart2& GPS_data;
 extern cordinates current, projection, checkpoint;

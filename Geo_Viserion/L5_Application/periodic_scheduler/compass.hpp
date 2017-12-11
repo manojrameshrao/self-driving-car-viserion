@@ -10,6 +10,7 @@
 
 #include "stdint.h"
 
+//#define OFFSET_CORRECTION
 typedef enum
 {
  UART0,
@@ -23,7 +24,8 @@ bool init_compass_serial(UART_CHANNEL UART_INTEFACE, unsigned int uart_baudrate)
 bool get_compass_head(unsigned int * compass_head);
 bool debug_compass_head(uint16_t compass_head_pointer);
 
-
-
+#ifdef OFFSET_CORRECTION
+   void switch_calibration(void);
+#endif
 
 #endif /* COMPASS_HPP_ */
