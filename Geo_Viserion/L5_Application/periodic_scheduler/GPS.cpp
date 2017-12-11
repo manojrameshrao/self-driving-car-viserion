@@ -45,7 +45,7 @@ ALL_CHECKPOINTS_RECEIVED_t all_received;
 
 /* communication with master-module */
 MASTER_START_CMD_t start_command_from_master;
-
+MASTER_STOP_CMD_t stop_command_from_master;
  /* Initializes the GPS module
  * No Function parameters
  *
@@ -160,6 +160,11 @@ void get_GPS_data()
                 no_checkpoint_next++;
                 set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
 
+            }
+            else
+            {
+                /* assign the old checkpoint */
+                set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
             }
         }
     }
@@ -478,7 +483,7 @@ bool GPS_receive_data_processing(can_msg_t can_received_message)
 
         /*  Receive stop from master to cease all computations*/
         case 84:
-            if(dbc_decode_MASTER_START_CMD(&start_command_from_master,can_received_message.data.bytes,&can_received_message_header))
+            if(dbc_decode_MASTER_STOP_CMD(&stop_command_from_master,can_received_message.data.bytes,&can_received_message_header))
             {
                 start_flag = false;
             }
