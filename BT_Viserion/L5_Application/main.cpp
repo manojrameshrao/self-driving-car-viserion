@@ -126,7 +126,7 @@ int main(void)
     #endif
 
 	#if 1
-    scheduler_add_task(new display_Task(PRIORITY_LOW));
+    scheduler_add_task(new display_Task(PRIORITY_MEDIUM));
 	#endif
 
 

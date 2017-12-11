@@ -441,8 +441,8 @@ void display_Task::displayScrn1(void)
 	drawFastHLine(5,150,231,ILI9340_WHITE);
 	drawFastHLine(5,200,231,ILI9340_WHITE);
 	drawString("Speed",12,20,2,ILI9340_YELLOW);
-	drawString("Direction",12,70,2,ILI9340_YELLOW);
-	drawString("Sensor_Left",12,120,2,ILI9340_YELLOW);
+	drawString("Heading Angle",12,70,2,ILI9340_YELLOW);
+	drawString("Bearing Angle",12,120,2,ILI9340_YELLOW);
 	drawString("Battery",12,170,2,ILI9340_YELLOW);
 
 	// Is there any change in BPS?

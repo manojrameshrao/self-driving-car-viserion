@@ -65,7 +65,7 @@ Uart3& u3=Uart3::getInstance();
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	CAN_init(can1, 100, 5, 5, NULL, NULL);
+	CAN_init(can1, 100, 100, 100, NULL, NULL);
 	CAN_reset_bus(can1);
 	CAN_bypass_filter_accept_all_msgs();
 	bluetoothreceiveinit(u3);

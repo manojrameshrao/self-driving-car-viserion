@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 #include    <stdlib.h>
+#include "io.hpp"
 
 
 #include <string.h>
@@ -18,6 +19,8 @@ SEND_COORDINATES_t send_start_co={0};
 SEND_GEO_ANGLES_t send_compass_dir={0};
 MOTOR_STATUS_t speed ={0};
 SENSORS_VALUES_t sensor_values={0};
+ALL_CHECKPOINTS_RECEIVED_t check ={0};
+SEND_GEO_READY_t lock ={0};
 
 double slatt;
 double slongi;
@@ -28,7 +31,8 @@ int sensor_middle=0;
 int sensor_rear=0;
 
 int count =0;
-int comp=0;
+int head=0;
+int bear=0;
 int car_speed=0;
 void receiveallcanmsges(Uart3 & u3){
 	can_msg_t can_msg;
@@ -51,7 +55,7 @@ void receiveallcanmsges(Uart3 & u3){
 				sensor_right=sensor_values.SENSOR_right_in;
 				sensor_middle = sensor_values.SENSOR_middle_in;
 
-				setSENSOR_LEFT_INIT(100);
+
 
 
 			}
@@ -86,8 +90,29 @@ void receiveallcanmsges(Uart3 & u3){
 		break;
 		case 401 :{
 				if(dbc_decode_SEND_GEO_ANGLES(&send_compass_dir,can_msg.data.bytes,&can_msg_hdr))
-					 comp=send_compass_dir.SEND_HEAD;
-				setDIRECTION_INIT(comp);
+					 head=send_compass_dir.SEND_HEAD;
+					bear=send_compass_dir.SEND_BEAR;
+				setDIRECTION_INIT(head);
+				setSENSOR_LEFT_INIT(bear);
+				setBATTERY_INIT(bear);
+		}
+		break;
+
+		case 406: {
+			if(dbc_decode_SEND_GEO_READY(&lock,can_msg.data.bytes,&can_msg_hdr))
+			{
+				char not_lock[3]="NO";
+				u3.putline(not_lock);
+			}
+
+		}
+
+		case 404: if(dbc_decode_ALL_CHECKPOINTS_RECEIVED(&check,can_msg.data.bytes,&can_msg_hdr))
+		{
+			if(check.GEO_CHECKPOINTS_READY == 0)
+			{
+				LE.toggle(4);
+			}
 		}
 		break;
 		case 301 :{
@@ -130,7 +155,7 @@ void sendDetails(Uart3 & u3,bool stats){
 
 		char compass[4]="D";
 		char value[3];
-		itoa(comp,value,10);
+		itoa(head,value,10);
 		strcat(compass,value);
 		strcat(compass,"\n");
 		sendtoapp(compass,u3);
