@@ -26,16 +26,21 @@ SENSORS_VALUES_t sensor_st = {0};
 
 bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx)
 {
-    can_msg_t can_msg = {0};
+    //can_msg_t can_msg = {0};
     dbc_msg_hdr_t msgRx = {0};
     //if(CAN_rx(can1, &can_msg, 0))
     {
+/*
         msgRx.dlc = can_msg.frame_fields.data_len;
         msgRx.mid = can_msg.msg_id;
+*/
+
+        msgRx.dlc = crx->frame_fields.data_len;
+        msgRx.mid = crx->msg_id;
 
         rx->dlc = crx->frame_fields.data_len;
         rx->mid = crx->msg_id;
-
+/*
         switch(rx->mid)
         {
             case Sensor_Data_Id :
@@ -47,6 +52,19 @@ bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *cr
                 break;
         }
     }
+*/
+    switch(rx->mid)
+    {
+        case Sensor_Data_Id :
+            if(dbc_decode_SENSORS_VALUES(&sensor_st, crx->data.bytes, &msgRx))
+            {
+                LE.set(2, 1);
+                checkSensorValues(speed,direction);
+            }
+            break;
+    }
+}
+
     if(dbc_handle_mia_SENSORS_VALUES(&sensor_st, 10))
     {
         transmit_to_motor(brake,straight); //should be brake
