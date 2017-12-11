@@ -38,13 +38,14 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "io.hpp"
+#include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
 
 bool wait_for_start(can_msg_t *crx,dbc_msg_hdr_t *rx);
 bool send_start_signal();
 //bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx);
 
 //#include "_can_dbc/generated_Viserion.h"
-#include "Transmit_Data_To_Motor/transmit_sensor_to_motor.h"
+
 
 
 const can_t canbusno = can1;
@@ -55,8 +56,14 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 8);
 bool gChangeState = false;
 state_machine gCurrentState = init_car;
 
+//unsigned int gSpeed = brake;
+//unsigned int gDirection = straight;
 
-uint8_t speed= brake,direction= straight;
+unsigned int gGeoSpeed = brake;
+unsigned int gGeoDirection = straight;
+
+//unsigned int gGeo_Speed = brake;
+//unsigned int gGeo_Direction = straight;
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -100,6 +107,7 @@ void period_1Hz(uint32_t count)
     if(CAN_is_bus_off(canbusno))
     {
         CAN_reset_bus(canbusno);
+        LE.toggle(1); //to check can bus off
     }
     //receive_heartbeats(canbusno,1000);
 
@@ -140,7 +148,8 @@ void period_100Hz(uint32_t count)
                 break;
             case get_distance_heading:
                 gChangeState = false;
-                take_decision(&can_msg,&msgRx);
+                take_decision(&can_msg,&msgRx, gGeoSpeed, gGeoDirection); //references
+               // take_decision(&can_msg,&msgRx);
                 if(gChangeState)
                 {
                     gCurrentState = get_sensor_vals;
@@ -148,7 +157,7 @@ void period_100Hz(uint32_t count)
                 break;
             case get_sensor_vals:
                 gChangeState = false;
-                receiveSensorValues(speed,direction,&can_msg,&msgRx);
+                receiveSensorValues(gGeoSpeed,gGeoDirection,&can_msg,&msgRx);
                 if(gChangeState)
                 {
                     gCurrentState = get_distance_heading;

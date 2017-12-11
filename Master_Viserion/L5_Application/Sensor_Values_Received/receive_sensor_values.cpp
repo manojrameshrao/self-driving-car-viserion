@@ -24,10 +24,8 @@ SENSORS_VALUES_t sensor_st = {0};
 #define MIN_CORNER_DIST 15
 #define MIN_REAR_DIST
 
-bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg_hdr_t *rx)
+bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx)
 {
-    uint8_t speed = 0; //only for compilation
-    uint8_t direction = 0; //only for compilation
     can_msg_t can_msg = {0};
     dbc_msg_hdr_t msgRx = {0};
     //if(CAN_rx(can1, &can_msg, 0))
@@ -58,13 +56,12 @@ bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg
     return true;
 }
 
-bool checkSensorValues(uint8_t speed,uint8_t direction)
+bool checkSensorValues(unsigned int speed,unsigned int direction) // these values will be gGeoSpeed, gGeoDirection
 {
     static uint64_t isReverse = 0;
-    static uint8_t prev_speed = 0;
+    static uint8_t prev_speed = brake; //first iteration
+
     bool waitReverse = false;
-    //uint8_t speed = 0;
-   // uint8_t direction = 0;
 
     if(sensor_st.SENSOR_middle_in <= MIN_MIDDLE_DIST) //if middle : 0 to 10
     {
@@ -91,15 +88,7 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
             speed = brake; // 1
             direction = straight; //0
             isReverse++;
-            /*if(sensor_st.SENSOR_back_in <= REAR_DIST)
-            {
-                waitReverse = false;
-            }
-            else*/
-            {
-                waitReverse = true;
-            }
-
+            waitReverse = true;
         }
         else if(sensor_st.SENSOR_right_in <= CORNER_DIST) // right(0 - 25) + middle(11 - 25)
         {
@@ -149,20 +138,24 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
             speed = slow; //2
             direction = slight_right; //4
         }
-        else
+/*
+        else // No obstacle Detected
         {
             //middle,left, right (> 25)
             LD.setNumber(90);
             speed = medium; //3
             direction = straight; //0
+
         }
-    }
+*/
+    } //middle not detected
+
     if(!waitReverse)
     {
        if(prev_speed > reverse) //for brake, slow, medium, fast
         {
-           transmit_to_motor(speed, direction);
-           prev_speed = speed;
+               transmit_to_motor(speed, direction);
+               prev_speed = speed;
         }
         else //prev_speed == reverse
         {
@@ -186,14 +179,14 @@ bool checkSensorValues(uint8_t speed,uint8_t direction)
         {
             transmit_to_motor(brake, straight);
             prev_speed = brake; //added to compare with previous values
-            LD.setNumber(1);
+           // LD.setNumber(1);
         }
         else
         {
             transmit_to_motor(reverse, straight);
             LE.on(4);
             prev_speed = reverse; //added to compare with previous values
-            LD.setNumber(2);
+           // LD.setNumber(2);
         }
      }
     gChangeState = true;

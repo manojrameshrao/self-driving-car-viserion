@@ -9,10 +9,8 @@
 #include <Periodic_Hearbeats/receive_heartbeats.h>
 #include "io.hpp"
 
-bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx)
+bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx, unsigned int& pSpeed, unsigned int& pDirection)
 {
-    uint8_t speed = 0;
-    uint8_t direction = 0;
     SEND_GEO_ANGLES_t geo_msg={0};
     if(crx->msg_id == 401)
     {
@@ -38,28 +36,28 @@ bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx)
 
             if(angle_diff > 10 && angle_diff > 90) // use #define
             {
-                speed = slow;
-                direction = full_right;
+                pSpeed = slow;
+                pDirection = full_right;
             }
             else if(angle_diff > 10 && angle_diff < 90)
             {
-                speed = slow;
-                direction = slight_right;
+                pSpeed = slow;
+                pDirection = slight_right;
             }
             else if(angle_diff < -10 && angle_diff < -90)
             {
-                speed = slow;
-                direction = full_left;
+                pSpeed = slow;
+                pDirection = full_left;
             }
             else if(angle_diff < -10 && angle_diff > -90)
             {
-                speed = slow;
-                direction = slight_left;
+                pSpeed = slow;
+                pDirection = slight_left;
             }
             else
             {
-                speed = medium;
-                direction = straight;
+                pSpeed = medium;
+                pDirection = straight;
             }
         }
         gChangeState = true;

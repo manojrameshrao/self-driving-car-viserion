@@ -43,7 +43,7 @@ enum{
 
 };
 
-bool receiveSensorValues(unsigned int sp,unsigned int dir,can_msg_t *crx,dbc_msg_hdr_t *rx);
+bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx);
 bool checkSensorValues(unsigned int speed,unsigned int direction);
 #ifdef __cplusplus
 }

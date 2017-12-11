@@ -23,4 +23,9 @@ typedef enum
 extern state_machine gCurrentState;
 extern bool gChangeState;
 
+//extern unsigned int gSpeed;
+//extern unsigned int gDirection;
+//extern unsigned int gGeoSpeed;
+//extern unsigned int gGeoDirection;
+
 #endif /* COMMONVARIABLES_H_ */
