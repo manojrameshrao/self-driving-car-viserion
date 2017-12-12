@@ -42,7 +42,7 @@
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
-const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 8);
 
 /* variable to receive CAN message */
 can_msg_t can_received_message;
@@ -54,6 +54,9 @@ dbc_msg_hdr_t encoded_geo_angles;
 /* communication with BT-moudle */
 DESTINATION_REACHED_t destination;
 //MASTER_START_CMD_t start;
+
+/* variable to hold the current compass value */
+static unsigned int  compass_head = 0;
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -116,20 +119,39 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-
-
+    bool status = false;
+//    float bearing_angle = 0;
+    /* history_compass_head variable, holds the compass_head value */
+    static unsigned int  history_compass_head = 0;
+    /*  get the compass head (YAW) from Razor SEN-14001*/
+    status = get_compass_head(&compass_head);
+    if(status)
+    {
+        /*  indication of Razor SEN-14001's communication with SJ1*/
+        history_compass_head = compass_head;
+    }
+    else
+    {
+       /*  Indication of RAZOR SEN14001 not able to send the data*/
+       compass_head = history_compass_head;
+    }
+ //   u0_dbg_printf("%d \n",compass_head);
 }
 
 void period_100Hz(uint32_t count)
 {
     /* variable to hold start_message_status from master*/
+    static bool received_start_master = false;
     bool start = false;
-
     /*  CAN Reception */
     if(CAN_rx(can1,&can_received_message,0))
     {
         start = GPS_receive_data_processing(can_received_message);
-        calculate_and_send_angles(start);
+        if(start)
+        {
+            received_start_master = true;
+        }
+        calculate_and_send_angles(received_start_master);
     }
 }
 
@@ -145,30 +167,11 @@ void period_1000Hz(uint32_t count)
  */
 void calculate_and_send_angles(bool start)
 {
-    bool status = false;
-    float bearing_angle;
-    /* variable to hold the current compass value */
-    unsigned int  compass_head = 0;
-    /* history_compass_head variable, holds the compass_head value */
-    static unsigned int  history_compass_head = 0;
-//    static unsigned int  history_GPS_bear = 0;
-
-       // printf("Haver:%f\n", get_bearing_angle_haversine());
+   float bearing_angle = 0;
    if(start)
    {
+       LE.toggle(2);
        bearing_angle = get_bearing_angle_haversine();
-       /*  get the compass head (YAW) from Razor SEN-14001*/
-       status = get_compass_head(&compass_head);
-       if(status)
-       {
-           /*  indication of Razor SEN-14001's communication with SJ1*/
-           history_compass_head = compass_head;
-       }
-       else
-       {
-          /*  Indication of RAZOR SEN14001 not able to send the data*/
-          compass_head = history_compass_head;
-       }
 #ifdef DEBUG
         printf("Bearing: %f\n", bearing_angle);
         printf("Heading: %d\n", compass_head);
