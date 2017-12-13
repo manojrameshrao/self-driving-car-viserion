@@ -58,6 +58,12 @@ DESTINATION_REACHED_t destination;
 /* variable to hold the current compass value */
 static unsigned int  compass_head = 0;
 
+/* variable to hold start_message_status from master*/
+static bool received_start_master = false;
+
+/*variable to indicate car has arrived on one of the checkpoints*/
+static bool checkpoint_viccinity = false;
+
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
  * Minimum 1500 bytes are needed in order to write a debug file if the period tasks overrun.
@@ -115,6 +121,11 @@ void period_1Hz(uint32_t count)
             CAN_reset_bus(can1);
 
     }
+    else if(received_start_master == true && ((count%3)==0))
+    {
+            LE.set(3,0);
+            send_current_cordinates(true);
+    }
 }
 
 void period_10Hz(uint32_t count)
@@ -140,8 +151,7 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-    /* variable to hold start_message_status from master*/
-    static bool received_start_master = false;
+
     bool start = false;
     /*  CAN Reception */
     if(CAN_rx(can1,&can_received_message,0))
@@ -172,6 +182,7 @@ void calculate_and_send_angles(bool start)
    {
        LE.toggle(2);
        bearing_angle = get_bearing_angle_haversine();
+      // bearing_angle = get_bearing_angle();
 #ifdef DEBUG
         printf("Bearing: %f\n", bearing_angle);
         printf("Heading: %d\n", compass_head);
@@ -186,6 +197,11 @@ void calculate_and_send_angles(bool start)
        if(checkpoint_reached())
        {
            LE.toggle(2);
+
+       }
+       else
+       {
+           LE.off(2);
        }
        if(destination_reached())
        {
@@ -193,6 +209,11 @@ void calculate_and_send_angles(bool start)
            LE.toggle(4);
            destination.GEO_DESTINATION = 1;
            dbc_encode_and_send_DESTINATION_REACHED(&destination);
+       }
+       else
+       {
+           LE.off(4);
+           destination.GEO_DESTINATION = 0;
        }
     }
    else

@@ -29,9 +29,10 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-
+#include "eint.h"
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -44,13 +45,20 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
  * printf inside these functions, you need about 1500 bytes minimum
  */
 const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
-
+void callme(void);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+
+    eint3_enable_port2(6,eint_falling_edge,callme);
     return true; // Must return true upon success
 }
 
+void callme(void)
+{
+    static uint16_t sensor_cut = 0;
+    printf("count:%d \n",sensor_cut);
+}
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
