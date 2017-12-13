@@ -156,16 +156,16 @@ bool checkSensorValues(unsigned int speed,unsigned int direction) // these value
             speed = slow; //2
             direction = slight_right; //4
         }
-/*
+
         else // No obstacle Detected
         {
             //middle,left, right (> 25)
             LD.setNumber(90);
-            speed = medium; //3
-            direction = straight; //0
+            //speed = medium; //3
+            //direction = straight; //0
 
         }
-*/
+
     } //middle not detected
 
     if(!waitReverse)

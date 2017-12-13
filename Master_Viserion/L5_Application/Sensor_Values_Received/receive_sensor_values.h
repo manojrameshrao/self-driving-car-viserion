@@ -24,15 +24,6 @@ enum{
     Motor_Speed_Id = 203,
 };
 
-//For Speed
-enum{
-    reverse,
-    brake,
-    slow,
-    medium,
-    fast
-};
-
 //For Directions
 enum{
     straight,
@@ -42,6 +33,16 @@ enum{
     slight_right
 
 };
+
+//For Speed
+enum{
+    reverse,
+    brake,
+    slow,
+    medium,
+    fast
+};
+
 
 bool receiveSensorValues(unsigned int speed,unsigned int direction,can_msg_t *crx,dbc_msg_hdr_t *rx);
 bool checkSensorValues(unsigned int speed,unsigned int direction);

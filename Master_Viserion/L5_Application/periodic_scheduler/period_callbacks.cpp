@@ -169,6 +169,11 @@ void period_100Hz(uint32_t count)
                 gChangeState = false;
                 take_decision(&can_msg,&msgRx, gGeoSpeed, gGeoDirection); //references
                // take_decision(&can_msg,&msgRx);
+#ifdef DEBUG_PRINT
+                    //printf("gch=%d\n",gChangeState);
+                    printf("id=%d\n",can_msg.msg_id);
+#endif
+
                 if(gChangeState)
                 {
 #ifdef DEBUG_PRINT
