@@ -53,5 +53,6 @@ float to_degrees(float value);
 bool GPS_ready();
 bool GPS_receive_data_processing(can_msg_t can_received_message);
 void send_current_cordinates(bool flag);
+void send_current_car_cordinates_run(bool flag);
 void send_all_chekpoints_received(bool flag);
 #endif /* L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_ */

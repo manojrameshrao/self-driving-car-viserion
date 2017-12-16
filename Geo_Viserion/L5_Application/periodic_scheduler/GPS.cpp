@@ -26,6 +26,8 @@ static unsigned int allCheckpointsCorrectlyReceived = false;
 static bool start_flag = false;
 SEND_GEO_NOT_READY_t geo_not_ready;
 SEND_COORDINATES_t current_coordinates;
+/* temporary signal for application */
+SEND_CURRENT_COORDINATES_t car_coordinates_run;
 
 struct checkpoints{
      double latitude =0;
@@ -46,6 +48,10 @@ ALL_CHECKPOINTS_RECEIVED_t all_received;
 /* communication with master-module */
 MASTER_START_CMD_t start_command_from_master;
 MASTER_STOP_CMD_t stop_command_from_master;
+
+/* offset calculator */
+double lattitude_offset = 0;
+double longitude_offset = 0;
  /* Initializes the GPS module
  * No Function parameters
  *
@@ -130,6 +136,9 @@ void get_GPS_data()
         {
             current.latitude = convert_to_degrees(atof(gps_latitude));
             current.longitude = (WEST_COAST) * convert_to_degrees(atof(gps_longitude));
+            /* offset correction */
+            current.latitude =  current.latitude + lattitude_offset;
+            current.longitude = current.longitude +longitude_offset;
             valid_location = false;
         }
 
@@ -390,7 +399,6 @@ void send_current_cordinates(bool flag)
 #endif
         dbc_encode_and_send_SEND_COORDINATES(&current_coordinates);
     }
-
     else
     {
         /*  Send msg 406 to send GPS_NOT_READY signal*/
@@ -400,6 +408,30 @@ void send_current_cordinates(bool flag)
     sendCordinate = false;
 }
 
+
+/* this is a temporay function to */
+void send_current_car_cordinates_run(bool flag)
+{
+    if(flag)
+    {
+        /* Send msg 407 to send the current GPS coordinate*/
+        car_coordinates_run.SEND_CURRENT_LATTITUDE = current.latitude;
+        car_coordinates_run.SEND_CURRENT_LONGITUDE = current.longitude;
+#ifdef DEBUG
+        printf("c_lt: %lf \n",current_coordinates.SEND_LATTITUDE);
+        printf("c_lg: %lf \n",current_coordinates.SEND_LONGITUDE);
+#endif
+        dbc_encode_and_send_SEND_CURRENT_COORDINATES(&car_coordinates_run);
+    }
+
+    else
+    {
+        /*  Send msg 406 to send GPS_NOT_READY signal*/
+        geo_not_ready.GPS_NOT_READY = 0;
+        dbc_encode_and_send_SEND_GEO_NOT_READY(&geo_not_ready);
+    }
+    sendCordinate = false;
+}
 /* function: send_all_chekpoints_received
  * Send all_chekpoints_received signal to master with 1 if flag is true else send with 0
  */
@@ -467,6 +499,23 @@ bool GPS_receive_data_processing(can_msg_t can_received_message)
                  if(no_of_checkpoints.BT_NO_OF_COR == checkpoint_index)
                  {
                      allCheckpointsCorrectlyReceived = true;
+                     if(checkpoints_BT[0].latitude>current.latitude)
+                     {
+                         lattitude_offset = checkpoints_BT[0].latitude - current.latitude;
+                     }
+                     else
+                     {
+                         lattitude_offset = current.latitude - checkpoints_BT[0].latitude;
+                     }
+
+                     if(checkpoints_BT[0].longitude>current.longitude)
+                     {
+                         longitude_offset = current.longitude - checkpoints_BT[0].longitude;
+                     }
+                     else
+                     {
+                         longitude_offset = checkpoints_BT[0].longitude - current.longitude;
+                     }
                  }
                  /* Take action based on allCheckpointsCorrectlyReceived flag*/
                  send_all_chekpoints_received(allCheckpointsCorrectlyReceived);

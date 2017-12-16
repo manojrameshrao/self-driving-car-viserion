@@ -123,8 +123,8 @@ void period_1Hz(uint32_t count)
     }
     else if(received_start_master == true && ((count%3)==0))
     {
-            LE.set(3,0);
-            send_current_cordinates(true);
+            LE.off(3);
+            send_current_car_cordinates_run(true);
     }
 }
 
@@ -180,9 +180,8 @@ void calculate_and_send_angles(bool start)
    float bearing_angle = 0;
    if(start)
    {
-       LE.toggle(2);
-       bearing_angle = get_bearing_angle_haversine();
-      // bearing_angle = get_bearing_angle();
+     //  bearing_angle = get_bearing_angle_haversine();
+       bearing_angle = get_bearing_angle();
 #ifdef DEBUG
         printf("Bearing: %f\n", bearing_angle);
         printf("Heading: %d\n", compass_head);
