@@ -9,6 +9,8 @@
 #include "GPS.h"
 #include "generated_Viserion.h"
 
+//# define TEST_STATIC
+#define OFFSET_GPS
 /*Global definitions*/
 char buffer[200] = {0};
 char satelite[3];
@@ -28,11 +30,18 @@ SEND_GEO_NOT_READY_t geo_not_ready;
 SEND_COORDINATES_t current_coordinates;
 /* temporary signal for application */
 SEND_CURRENT_COORDINATES_t car_coordinates_run;
-
+#define CHECKPOINT_GPS_AREA (0.00003)
 struct checkpoints{
      double latitude =0;
      double longitude =0;
 }checkpoints_BT[20];
+
+struct checkpoints_trial{
+     double latitude =0;
+     double longitude =0;
+}checkpoints_Trial[4];
+
+
 
 
 /* variable to receive CAN message */
@@ -56,12 +65,29 @@ double longitude_offset = 0;
  * No Function parameters
  *
  **/
+
+/* GPS averaging */
+SEND_COORDINATES_t gps_average_array[8];
+bool set_avarage_gps(SEND_COORDINATES_t gps_coordinates);
+SEND_COORDINATES_t get_avarage_gps();
+void clear_avarage_gps();
+void copy_coordinates(SEND_COORDINATES_t source_gps_coordinates,SEND_COORDINATES_t * destination_gps_coordinates);
+static uint8_t gps_array_index = 0;
+
 void init_GPS_module()
 {
     /*Configure the GPS in pedestrian mode*/
     GPS_data.init(115200,76,1);
     LE.off(4);
     LE.off(2);
+    checkpoints_Trial[0].latitude = 37.336949;
+    checkpoints_Trial[0].longitude  = -121.882550;
+    checkpoints_Trial[1].latitude  = 37.336712;
+    checkpoints_Trial[1].longitude = -121.882215;
+    checkpoints_Trial[2].latitude = 37.336319;
+    checkpoints_Trial[2].longitude  = -121.881976;
+    checkpoints_Trial[3].latitude  = 37.336468;
+    checkpoints_Trial[3].longitude = -121.881728;
     //GPS_ready = false;
 }
 
@@ -78,6 +104,9 @@ double convert_to_degrees(double value)
     reference = (int)(value / 100);
     reference = reference * 100;
     minutes = (value - reference)/60;
+#ifdef DEBUG
+    printf("converted: %lf \n",degrees + minutes);
+#endif
     return degrees + minutes;
 }
 
@@ -92,7 +121,7 @@ void get_GPS_data()
     char *gps_longitude = NULL;
     static uint8_t no_checkpoint_next = 0;
     static uint8_t valid_location = false;
-
+    static uint8_t checkpoint_set = false;
     /* Get the GPS data */
     GPS_data.gets(buffer,sizeof(buffer),0);
     //char buff[200] = "$GNGGA,094727.20,3720.00458,N,12154.72293,W,2,12,0.82,44.8,M,-29.9,M,,0000*41";
@@ -137,8 +166,15 @@ void get_GPS_data()
             current.latitude = convert_to_degrees(atof(gps_latitude));
             current.longitude = (WEST_COAST) * convert_to_degrees(atof(gps_longitude));
             /* offset correction */
+#ifdef OFFSET_GPS
             current.latitude =  current.latitude + lattitude_offset;
             current.longitude = current.longitude +longitude_offset;
+#endif
+
+#ifdef GPS_AVERAGE
+
+            set_avarage_gps(&current);
+#endif
             valid_location = false;
         }
 
@@ -147,42 +183,53 @@ void get_GPS_data()
         printf("lg geo: %lf \n",current.longitude);
 #endif
 
-#ifdef TEST_STATIC
-        current.latitude = 37.3382082;
-        current.longitude = -121.8863286;
-       // set_projection_data(current.latitude,current.longitude);
-        //ISSS chekpoint
-        set_checkpoint_data(37.336601, -121.8811567);
-#endif
+
         /* wait for the START signal from master */
         if(start_flag == true)
         {
+
             /* Set the Initial check point */
-            if(no_checkpoint_next == 0)
+            if(no_checkpoint_next == 0 && checkpoint_set == false)
             {
+                checkpoint_set = true;
                 set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
+#ifdef TEST_STATIC
+                set_checkpoint_data(checkpoints_Trial[no_checkpoint_next].latitude,checkpoints_Trial[no_checkpoint_next].longitude);
+#endif
             }
             /* We have reached the checkpoint */
             if(checkpoint_reached())
             {
                 /* move to next checkpoint */
                 no_checkpoint_next++;
+                //no_checkpoint_next = 1;
+#ifdef TEST_STATIC
+                set_checkpoint_data(checkpoints_Trial[no_checkpoint_next].latitude,checkpoints_Trial[no_checkpoint_next].longitude);
+#endif
+
                 set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
 
             }
+/*
             else
             {
+
+#ifdef TEST_STATIC
+                set_checkpoint_data(checkpoints_Trial[no_checkpoint_next].latitude,checkpoints_Trial[no_checkpoint_next].longitude);
+#elif
                 /* assign the old checkpoint */
-                set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
+/*                set_checkpoint_data(checkpoints_BT[no_checkpoint_next].latitude,checkpoints_BT[no_checkpoint_next].longitude);
+#endif
             }
+*/
         }
     }
     else
     {
         /* Turn OFF led 1*/
         LE.off(1);
-        printf("unlocked\n");
     }
+
 }
 
 /* function: set_projection_data
@@ -291,6 +338,7 @@ bool get_satallites_status(uint8_t satellite)
  */
 bool checkpoint_reached()
 {
+
     if((current.latitude <= checkpoint.latitude + 0.00003) && (current.latitude >= checkpoint.latitude - 0.00003))
     {
         if((current.longitude <= checkpoint.longitude + 0.00003) && (current.longitude >= checkpoint.longitude - 0.00003))
@@ -299,6 +347,16 @@ bool checkpoint_reached()
            return true;
         }
     }
+
+//    if((current.latitude <= checkpoint.latitude + CHECKPOINT_GPS_AREA) && (current.latitude >= checkpoint.latitude - CHECKPOINT_GPS_AREA))
+//    {
+//        if((current.longitude <= checkpoint.longitude + CHECKPOINT_GPS_AREA) && (current.longitude >= checkpoint.longitude - CHECKPOINT_GPS_AREA))
+//        {
+//           //LE.toggle(4);
+//           return true;
+//        }
+//    }
+
     return false;
 }
 
@@ -308,6 +366,20 @@ bool checkpoint_reached()
  */
 bool destination_reached()
 {
+
+#ifdef TEST_STATIC
+    /* final destination */
+    uint8_t final_destination = 3;
+    if((current.latitude <= checkpoints_Trial[final_destination].latitude + 0.00003) && (current.latitude >= checkpoints_Trial[final_destination].latitude - 0.00003))
+    {
+        if((current.longitude <= checkpoints_Trial[final_destination].longitude + 0.00003) && (current.longitude >= checkpoints_Trial[final_destination].longitude - 0.00003))
+        {
+            /* set the checkpoint index */
+            checkpoint_index = 0;
+            return true;
+        }
+    }
+#endif
     /* final destination */
     uint8_t final_destination = checkpoint_index -1;
     if((current.latitude <= checkpoints_BT[final_destination].latitude + 0.00003) && (current.latitude >= checkpoints_BT[final_destination].latitude - 0.00003))
@@ -319,6 +391,8 @@ bool destination_reached()
             return true;
         }
     }
+
+
     return false;
 
 }
@@ -327,15 +401,23 @@ bool destination_reached()
  * Calculate the bearing angle using haversine
  * Bearing angle[out]: returns the bearing angle
  */
-float get_bearing_angle_haversine()
+float get_bearing_angle_haversine(bool calculate)
 {
    /*Haversine formula tan(theta) =  cos(lat2)*sin(dlon) /
                    (cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(dlon))*/
 
-    float lat1,lat2,lon1,lon2,dlon,theta, numerator, denominator;
+    double lat1,lat2,lon1,lon2,dlon,theta, numerator, denominator;
 
     /*Get GPS data and set projection coordinates*/
     get_GPS_data();
+#ifdef TEST_STATIC
+    //    current.latitude = 37.337205;
+    //    current.longitude = -121.882707;
+       // set_projection_data(current.latitude,current.longitude);
+        //ISSS chekpoint
+     //   set_checkpoint_data(37.336949, -121.882550);
+#endif
+
 
     /*Radian conversions*/
     lat1 = to_radians(current.latitude);
@@ -347,10 +429,12 @@ float get_bearing_angle_haversine()
     /*calculate the numerator and denominator for haversine formula*/
     numerator = (cos(lat2)*sin(dlon));
     denominator = (cos(lat1)*sin(lat2)) - (sin(lat1)*cos(lat2)*cos(dlon));
-
+  //  u0_dbg_printf("lon1: %10.10lf \t lon2:%10.10lf \n",lon1,lon2);
     /*Calculate bearing angle*/
     theta = atan2(numerator, denominator);
+
     return to_degrees(theta);
+
 
 }
 
@@ -359,7 +443,7 @@ float get_bearing_angle_haversine()
  * Degree value[in]: input the degree value
  * Radian value[out]: returns the radian angle
  */
-float to_radians(float value)
+double to_radians(double value)
 {
     return (value * TO_RAD);
 }
@@ -369,7 +453,7 @@ float to_radians(float value)
  * Radian value[in]: input the radian angle
  * Degree value[out]: return the degree value
  */
-float to_degrees(float value)
+double to_degrees(double value)
 {
     return (value / TO_RAD);
 }
@@ -561,4 +645,44 @@ void extract()
 
 }
 
+bool set_avarage_gps(SEND_COORDINATES_t gps_coordinates)
+{
 
+  if(gps_array_index>=8)
+  {
+      return false;
+  }
+  /* fill in the gps values inside GPS array and increment the index */
+  copy_coordinates(gps_coordinates,&gps_average_array[gps_array_index++]);
+  return true;
+}
+
+SEND_COORDINATES_t get_avarage_gps()
+{
+    SEND_COORDINATES_t averaged_gps;
+    for(int i =0 ; i<8; i++)
+    {
+        averaged_gps.SEND_LATTITUDE = gps_average_array[i].SEND_LATTITUDE;
+        averaged_gps.SEND_LONGITUDE = gps_average_array[i].SEND_LONGITUDE;
+    }
+
+    averaged_gps.SEND_LATTITUDE =  (averaged_gps.SEND_LATTITUDE)/8;
+    averaged_gps.SEND_LONGITUDE =  (averaged_gps.SEND_LONGITUDE)/8;
+
+    return averaged_gps;
+}
+
+void clear_avarage_gps()
+{
+    for(int i =0 ; i<8; i++)
+    {
+        gps_average_array[i].SEND_LATTITUDE = 0;
+        gps_average_array[i].SEND_LONGITUDE = 0;
+    }
+}
+
+void copy_coordinates(SEND_COORDINATES_t source_gps_coordinates,SEND_COORDINATES_t * destination_gps_coordinates)
+{
+    destination_gps_coordinates->SEND_LATTITUDE = source_gps_coordinates.SEND_LATTITUDE;
+    destination_gps_coordinates->SEND_LONGITUDE = source_gps_coordinates.SEND_LONGITUDE;
+}

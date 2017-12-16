@@ -38,7 +38,7 @@
 #include "generated_Viserion.h"
 #include "GPS.h"
 #include "compass.hpp"
-
+//#define BEARING_TEST
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -126,6 +126,12 @@ void period_1Hz(uint32_t count)
             LE.off(3);
             send_current_car_cordinates_run(true);
     }
+
+#ifdef BEARING_TEST
+   double bearing_angle;
+   bearing_angle = get_bearing_angle_haversine();
+   u0_dbg_printf("Bearing: %f\n", bearing_angle);
+#endif
 }
 
 void period_10Hz(uint32_t count)
@@ -161,8 +167,12 @@ void period_100Hz(uint32_t count)
         {
             received_start_master = true;
         }
+
         calculate_and_send_angles(received_start_master);
     }
+#ifdef BEARING_TEST
+    //calculate_and_send_angles(true);
+#endif
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
@@ -178,17 +188,25 @@ void period_1000Hz(uint32_t count)
 void calculate_and_send_angles(bool start)
 {
    float bearing_angle = 0;
+#ifdef BEARING_TEST
+   bearing_angle = get_bearing_angle_haversine();
+   u0_dbg_printf("Bearing: %f\n", bearing_angle);
+#endif
    if(start)
    {
-     //  bearing_angle = get_bearing_angle_haversine();
-       bearing_angle = get_bearing_angle();
+
+       bearing_angle = get_bearing_angle_haversine();
+
+     //  bearing_angle = get_bearing_angle();
 #ifdef DEBUG
         printf("Bearing: %f\n", bearing_angle);
         printf("Heading: %d\n", compass_head);
 #endif
+
        angles_data.SEND_HEAD = compass_head;
        angles_data.SEND_BEAR = bearing_angle;
 
+      // LE.toggle(3);
        /*  Send 401 msg to master to send the calculated angles*/
        dbc_encode_and_send_SEND_GEO_ANGLES(&angles_data);
 
