@@ -26,28 +26,28 @@ bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx, unsigned int& pSpeed, unsig
         {
             //glow leds and check for distance range
         }
-        if(heading>180)
+        if(heading>ANGLE_OFFSET)
         {
-            heading-=360;
+            heading-=ANGLE_COMPENSATION;
         }
         angle_diff = bearing - heading;
 
-        if(angle_diff > 10 && angle_diff > 90) // use #define
+        if(angle_diff > ANGLE_RANGE && angle_diff > HARD_TURN_ANGLE) // use #define
         {
             pSpeed = slow;
             pDirection = full_right;
         }
-        else if(angle_diff > 10 && angle_diff < 90)
+        else if(angle_diff > ANGLE_RANGE && angle_diff < HARD_TURN_ANGLE)
         {
             pSpeed = slow;
             pDirection = slight_right;
         }
-        else if(angle_diff < -10 && angle_diff < -90)
+        else if(angle_diff < -ANGLE_RANGE && angle_diff < -HARD_TURN_ANGLE)
         {
             pSpeed = slow;
             pDirection = full_left;
         }
-        else if(angle_diff < -10 && angle_diff > -90)
+        else if(angle_diff < -ANGLE_RANGE && angle_diff > -HARD_TURN_ANGLE)
         {
             pSpeed = slow;
             pDirection = slight_left;

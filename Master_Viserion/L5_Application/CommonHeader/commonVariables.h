@@ -9,6 +9,11 @@
 #define COMMONVARIABLES_H_
 
 
+#define ANGLE_RANGE 10
+#define HARD_TURN_ANGLE 90
+#define ANGLE_OFFSET 180
+#define ANGLE_COMPENSATION 360
+
 typedef enum
 {
     init_car,
