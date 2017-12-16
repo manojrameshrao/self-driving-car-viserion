@@ -20,6 +20,17 @@ typedef enum
     gps_no_lock
 }state_machine;
 
+//For Message Ids
+enum{
+    BT_Start = 83,
+    BT_Stop = 84,
+    Sensor_Data_Id = 101,
+    Motor_Speed_Id = 203,
+    Geo_Angles = 401,
+    Geo_Dest_reached = 405
+};
+
+
 extern state_machine gCurrentState;
 extern bool gChangeState;
 

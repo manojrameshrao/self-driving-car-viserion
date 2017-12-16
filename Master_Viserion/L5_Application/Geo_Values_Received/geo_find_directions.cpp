@@ -11,9 +11,9 @@
 
 bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx, unsigned int& pSpeed, unsigned int& pDirection)
 {
-    SEND_GEO_ANGLES_t geo_msg={0};
-    if(crx->msg_id == 401)
+    if(crx->msg_id == Geo_Angles)
     {
+        SEND_GEO_ANGLES_t geo_msg={0};
         rx->dlc=crx->frame_fields.data_len;
         rx->mid=crx->msg_id;
         dbc_decode_SEND_GEO_ANGLES(&geo_msg,crx->data.bytes,rx);
@@ -22,10 +22,9 @@ bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx, unsigned int& pSpeed, unsig
         bearing = geo_msg.SEND_BEAR;
         dist = geo_msg.SEND_DIST_CHKPOINT;
 
-
         if(dist == 0)
         {
-            //glow leds
+            //glow leds and check for distance range
         }
         if(heading>180)
         {
@@ -58,10 +57,8 @@ bool take_decision(can_msg_t *crx,dbc_msg_hdr_t *rx, unsigned int& pSpeed, unsig
             pSpeed = medium;
             pDirection = straight;
         }
+        gChangeState = true;
     }
-    gChangeState = true;
-
-
    return true;
 }
 

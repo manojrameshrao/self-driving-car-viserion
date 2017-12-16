@@ -81,6 +81,8 @@ bool checkSensorValues(unsigned int speed,unsigned int direction) // these value
 
     bool waitReverse = false;
 
+#ifndef SENSORS_DISABLE
+
     if(sensor_st.SENSOR_middle_in <= MIN_MIDDLE_DIST) //if middle : 0 to 10
     {
         LD.setNumber(5);
@@ -156,7 +158,7 @@ bool checkSensorValues(unsigned int speed,unsigned int direction) // these value
             speed = slow; //2
             direction = slight_right; //4
         }
-
+#ifndef GEO_DISABLE
         else // No obstacle Detected
         {
             //middle,left, right (> 25)
@@ -165,6 +167,14 @@ bool checkSensorValues(unsigned int speed,unsigned int direction) // these value
             //direction = straight; //0
 
         }
+#else
+        //middle,left, right (> 25)
+        LD.setNumber(90);
+        speed = medium; //3
+        direction = straight; //0
+
+#endif
+
 
     } //middle not detected
 
@@ -207,6 +217,9 @@ bool checkSensorValues(unsigned int speed,unsigned int direction) // these value
            // LD.setNumber(2);
         }
      }
+#else
+    transmit_to_motor(speed, direction);
+#endif
     gChangeState = true;
     return true;
 }

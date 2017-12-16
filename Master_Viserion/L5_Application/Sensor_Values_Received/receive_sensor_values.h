@@ -18,11 +18,6 @@ extern "C" {
 
 //SENSORS_VALUES_t sensor_st;
 
-//For Message Ids
-enum{
-    Sensor_Data_Id = 101,
-    Motor_Speed_Id = 203,
-};
 
 //For Directions
 enum{

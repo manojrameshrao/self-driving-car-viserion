@@ -139,7 +139,7 @@ void period_100Hz(uint32_t count)
     dbc_msg_hdr_t msgRx = {0};
     if(CAN_rx(can1, &can_msg, 0))
     {
-        if(can_msg.msg_id == 405 || can_msg.msg_id == 84)
+        if(can_msg.msg_id == Geo_Dest_reached || can_msg.msg_id == BT_Stop)
         {
             gCurrentState= stop_car;
             gChangeState = false;
@@ -242,7 +242,7 @@ void period_1000Hz(uint32_t count)
 
 bool wait_for_start(can_msg_t *crx,dbc_msg_hdr_t *rx)
 {
-    if(crx->msg_id == 83)
+    if(crx->msg_id == BT_Start)
     {
         gChangeState = true;
     }
