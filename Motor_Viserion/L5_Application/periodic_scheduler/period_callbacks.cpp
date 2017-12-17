@@ -56,7 +56,8 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void) {
-	initialization();
+    initializeCAN();
+    initializeCAR();
 	return true; // Must return true upon success
 }
 
@@ -75,6 +76,8 @@ void period_1Hz(uint32_t count) {
 	maintainspeed();
 	if (CAN_is_bus_off(can1))
 		CAN_reset_bus(can1);
+
+	//feedback_servo();
 }
 void period_10Hz(uint32_t count) {
 	calc_orientation();
@@ -88,6 +91,8 @@ void period_10Hz(uint32_t count) {
 //					brake_flag=false;
 //					reverse_init();
 //				}
+
+	//feedback_servo();
 }
 
 void period_100Hz(uint32_t count) {
@@ -98,4 +103,5 @@ void period_100Hz(uint32_t count) {
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 
 void period_1000Hz(uint32_t count) {
+   // PWMcontrol();
 }

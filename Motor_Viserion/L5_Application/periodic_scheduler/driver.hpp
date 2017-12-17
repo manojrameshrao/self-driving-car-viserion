@@ -7,19 +7,23 @@ typedef enum {
 	uphill, downhill, invalid
 } orientation_t;
 
-void initialization(void);
+void initializeCAN();
+void initializeCAR(void);
 void bus_off(uint32_t);
 void data_ovr(uint32_t);
 void count_rpm();
-bool calculate_speed();
+bool calculate_speed(int no_of_rev);
 void setmotorPWM();
-float feedback(uint32_t req_rps);
+float feedback();
+void feedback_servo();
 void maintainspeed();
 void calc_orientation();
 bool getcanmsg();
 bool checkmia();
 void apply_brakes();
+void PWMcontrol();
 bool recieveanddecode(uint8_t*a, uint8_t*b);
+bool receive_decode_MID(uint8_t*a, uint8_t*b);
 int mspeed(uint8_t*a);
 int mdirection(uint8_t*b);
 int getrps(uint8_t speed_curr);
