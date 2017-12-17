@@ -33,6 +33,7 @@ extern cordinates checkpoints_array[10];
 #define LONGITUDE_START_INDEX (4)
 #define WEST_COAST (-1)
 #define EAST_COAST  (1)
+#define NO_SAMPLES  (7)
 //#define TEST_STATIC
 //#define DEBUG
 
@@ -43,16 +44,18 @@ double convert_to_degrees(double value);
 void set_projection_data(double latitude, double longitude);
 void set_checkpoint_data(double latitude, double longitude);
 float get_bearing_angle();
+extern volatile uint8_t gps_within_thresh;
 bool get_satallites_status(uint8_t satellite);
 bool get_GNGGA_status(char * format);
 bool checkpoint_reached();
 bool destination_reached();
 double to_radians(double value);
-float get_bearing_angle_haversine();
+float get_bearing_angle_haversine(bool calculate);
 double to_degrees(double value);
 bool GPS_ready();
 bool GPS_receive_data_processing(can_msg_t can_received_message);
 void send_current_cordinates(bool flag);
 void send_current_car_cordinates_run(bool flag);
 void send_all_chekpoints_received(bool flag);
+void clear_avarage_gps();
 #endif /* L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_ */

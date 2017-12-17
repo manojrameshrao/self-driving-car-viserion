@@ -7,6 +7,8 @@
 #include "printf_lib.h"
 #include "io.hpp"
 #include <stdlib.h>
+static int offset = 0;
+static bool flag_compass_calib = false;
 /* function: init_compass_serial
  * initializes serial interfaces to get values from Razor 9DOF IMU - SEN14001
  * UART_CHANNEL [in]: UART port number
@@ -17,15 +19,6 @@ Uart0 &u0 = Uart0::getInstance();
 Uart2 &u2 = Uart2::getInstance();
 Uart3 &u3 = Uart3::getInstance();
 
-#ifdef OFFSET_CORRECTION
-    static int16_t offset = 0;
-    enum {
-            sw1 = (1 << 0),
-            sw2 = (1 << 1),
-            sw3 = (1 << 2),
-            sw4 = (1 << 3),
-        };
-#endif
 
 bool init_compass_serial(UART_CHANNEL UART_INTERFACE,unsigned int uart_baudrate)
 {
@@ -90,15 +83,29 @@ bool debug_compass_head(uint16_t compass_head_pointer)
 #ifdef OFFSET_CORRECTION
    void switch_calibration(void)
    {
-       const uint8_t switches = SW.getSwitchValues();
-       switch(switches)
+       while(!flag_compass_calib)
        {
-           case sw1 :
-           case sw2 :
-           case sw3 :
-           case sw4 :
-           default:
-               break;
+           const uint8_t switches = SW.getSwitchValues();
+           switch(switches)
+           {
+               case sw1 :
+                         offset += 5;
+                         break;
+               case sw2 :
+                         offset -= 5;
+                         break;
+               case sw3 :
+                         offset -= 1;
+                         break;
+               case sw4 :
+                         flag_compass_calib = true;
+                         break;
+               default:
+                         break;
+           }
+
+           delay_ms(200);
+           //printf("offset:%d", offset);
        }
    }
 #endif

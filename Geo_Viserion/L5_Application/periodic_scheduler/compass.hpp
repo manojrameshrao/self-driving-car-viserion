@@ -9,8 +9,10 @@
 #define COMPASS_HPP_
 
 #include "stdint.h"
+#include "utilities.h"
 
-//#define OFFSET_CORRECTION
+
+#define OFFSET_CORRECTION
 typedef enum
 {
  UART0,
@@ -19,7 +21,12 @@ typedef enum
 }
 UART_CHANNEL;
 
-
+enum {
+    sw1 = (1 << 0),
+    sw2 = (1 << 1),
+    sw3 = (1 << 2),
+    sw4 = (1 << 3),
+};
 bool init_compass_serial(UART_CHANNEL UART_INTEFACE, unsigned int uart_baudrate);
 bool get_compass_head(unsigned int * compass_head);
 bool debug_compass_head(uint16_t compass_head_pointer);

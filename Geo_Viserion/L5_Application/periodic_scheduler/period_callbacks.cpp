@@ -43,7 +43,7 @@
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 8);
-
+volatile uint8_t gps_within_thresh;
 /* variable to receive CAN message */
 can_msg_t can_received_message;
 
@@ -61,8 +61,7 @@ static unsigned int  compass_head = 0;
 /* variable to hold start_message_status from master*/
 static bool received_start_master = false;
 
-/*variable to indicate car has arrived on one of the checkpoints*/
-static bool checkpoint_viccinity = false;
+
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -76,7 +75,7 @@ const uint32_t PERIOD_MONITOR_TASK_STACK_SIZE_BYTES = (512 * 3);
 bool period_init(void)
 {
     bool status = false;
-    /* initalize compass */
+    /* Initialize compass */
     status = init_compass_serial(UART3,115200);
     if(status)
     {
@@ -97,6 +96,9 @@ bool period_init(void)
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
     isNumberCheckPointsReceived = false;
+#ifdef OFFSET_CORRECTION
+   switch_calibration();
+#endif
     return true; // Must return true upon success
 }
 
@@ -152,6 +154,7 @@ void period_10Hz(uint32_t count)
        /*  Indication of RAZOR SEN14001 not able to send the data*/
        compass_head = history_compass_head;
     }
+
  //   u0_dbg_printf("%d \n",compass_head);
 }
 
@@ -188,28 +191,48 @@ void period_1000Hz(uint32_t count)
 void calculate_and_send_angles(bool start)
 {
    float bearing_angle = 0;
+   static bool calculate = false;
+   static uint8_t count = 0;
 #ifdef BEARING_TEST
    bearing_angle = get_bearing_angle_haversine();
    u0_dbg_printf("Bearing: %f\n", bearing_angle);
 #endif
    if(start)
    {
+       if(count == NO_SAMPLES)
+       {
+           calculate = true;
+           count  = 0;
+       }
+       else
+       {
+           calculate = false;
+           count++;
+       }
+       bearing_angle = get_bearing_angle_haversine(calculate);
 
-       bearing_angle = get_bearing_angle_haversine();
 
      //  bearing_angle = get_bearing_angle();
 #ifdef DEBUG
         printf("Bearing: %f\n", bearing_angle);
         printf("Heading: %d\n", compass_head);
 #endif
+       if(calculate == true )
+       {
 
-       angles_data.SEND_HEAD = compass_head;
-       angles_data.SEND_BEAR = bearing_angle;
 
-      // LE.toggle(3);
-       /*  Send 401 msg to master to send the calculated angles*/
-       dbc_encode_and_send_SEND_GEO_ANGLES(&angles_data);
+           angles_data.SEND_HEAD = compass_head;
+           angles_data.SEND_BEAR = bearing_angle;
 
+           LE.toggle(3);
+           if(gps_within_thresh)
+           {
+               /*  Send 401 msg to master to send the calculated angles*/
+               dbc_encode_and_send_SEND_GEO_ANGLES(&angles_data);
+           }
+         //  calculate = false;
+           clear_avarage_gps();
+       }
        /*  Check if the intermediate checkpoint has reached*/
        if(checkpoint_reached())
        {
