@@ -8,7 +8,7 @@
  /*Add dependent headers*/
 #include "GPS.h"
 #include "generated_Viserion.h"
-
+//#define CHECKPOINT_OFFSET
 //# define TEST_STATIC
 //#define OFFSET_GPS
 /*Global definitions*/
@@ -34,7 +34,7 @@ SEND_CURRENT_COORDINATES_t car_coordinates_run;
 struct checkpoints{
      double latitude =0;
      double longitude =0;
-}checkpoints_BT[20];
+}checkpoints_BT[50];
 
 struct checkpoints_trial{
      double latitude =0;
@@ -170,8 +170,8 @@ void get_GPS_data()
 
             /* offset correction */
 #ifdef OFFSET_GPS
-            intermediate.latitude =  intermediate.latitude + lattitude_offset;
-            intermediate.longitude = intermediate.longitude +longitude_offset;
+            intermediate.SEND_LATTITUDE =  intermediate.SEND_LATTITUDE - 0.000135 ;
+            intermediate.SEND_LONGITUDE = intermediate.SEND_LONGITUDE +  0.000107;
 #endif
             }
 
@@ -352,9 +352,9 @@ bool get_satallites_status(uint8_t satellite)
 bool checkpoint_reached()
 {
 
-    if((current.latitude <= checkpoint.latitude + 0.00003) && (current.latitude >= checkpoint.latitude - 0.00003))
+    if((current.latitude <= checkpoint.latitude + 0.00005) && (current.latitude >= checkpoint.latitude - 0.00005))
     {
-        if((current.longitude <= checkpoint.longitude + 0.00003) && (current.longitude >= checkpoint.longitude - 0.00003))
+        if((current.longitude <= checkpoint.longitude + 0.00005) && (current.longitude >= checkpoint.longitude - 0.00005))
         {
            //LE.toggle(4);
            return true;
@@ -395,9 +395,9 @@ bool destination_reached()
 #endif
     /* final destination */
     uint8_t final_destination = checkpoint_index -1;
-    if((current.latitude <= checkpoints_BT[final_destination].latitude + 0.00003) && (current.latitude >= checkpoints_BT[final_destination].latitude - 0.00003))
+    if((current.latitude <= checkpoints_BT[final_destination].latitude + 0.00005) && (current.latitude >= checkpoints_BT[final_destination].latitude - 0.00005))
     {
-        if((current.longitude <= checkpoints_BT[final_destination].longitude + 0.00003) && (current.longitude >= checkpoints_BT[final_destination].longitude - 0.00003))
+        if((current.longitude <= checkpoints_BT[final_destination].longitude + 0.00005) && (current.longitude >= checkpoints_BT[final_destination].longitude - 0.00005))
         {
             /* set the checkpoint index */
             checkpoint_index = 0;
@@ -601,9 +601,10 @@ bool GPS_receive_data_processing(can_msg_t can_received_message)
                      u0_dbg_printf("%lf",checkpoints.SET_LATTITUDE);
                      u0_dbg_printf("%lf",checkpoints.SET_LONGITUDE);
                     #endif
-                     (checkpoints_BT[checkpoint_index]).latitude = checkpoints.SET_LATTITUDE;
-                     (checkpoints_BT[checkpoint_index]).longitude = checkpoints.SET_LONGITUDE;
+                     (checkpoints_BT[checkpoint_index]).latitude = (checkpoints.SET_LATTITUDE ) ;
+                     (checkpoints_BT[checkpoint_index]).longitude =(checkpoints.SET_LONGITUDE );
                      checkpoint_index++;
+
                  }
                  break;
 
@@ -617,23 +618,6 @@ bool GPS_receive_data_processing(can_msg_t can_received_message)
                  if(no_of_checkpoints.BT_NO_OF_COR == checkpoint_index)
                  {
                      allCheckpointsCorrectlyReceived = true;
-                     if(checkpoints_BT[0].latitude>current.latitude)
-                     {
-                         lattitude_offset = checkpoints_BT[0].latitude - current.latitude;
-                     }
-                     else
-                     {
-                         lattitude_offset = current.latitude - checkpoints_BT[0].latitude;
-                     }
-
-                     if(checkpoints_BT[0].longitude>current.longitude)
-                     {
-                         longitude_offset = current.longitude - checkpoints_BT[0].longitude;
-                     }
-                     else
-                     {
-                         longitude_offset = checkpoints_BT[0].longitude - current.longitude;
-                     }
                  }
                  /* Take action based on allCheckpointsCorrectlyReceived flag*/
                  send_all_chekpoints_received(allCheckpointsCorrectlyReceived);

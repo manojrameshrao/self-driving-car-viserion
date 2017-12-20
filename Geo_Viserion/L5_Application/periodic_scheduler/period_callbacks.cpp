@@ -97,7 +97,7 @@ bool period_init(void)
     CAN_reset_bus(can1);
     isNumberCheckPointsReceived = false;
 #ifdef OFFSET_CORRECTION
-   switch_calibration();
+ //  switch_calibration();
 #endif
     return true; // Must return true upon success
 }
