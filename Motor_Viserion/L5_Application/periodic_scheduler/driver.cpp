@@ -17,10 +17,22 @@ const float MOTOR_INIT = 18;
 #define REVERSE             16.1
 #define BRAKES              17
 #define SERVO_CENTER        17.7
+
+
 #define SERVO_HARD_LEFT     10.9
 #define SERVO_SLIGHT_LEFT   14.9
 #define SERVO_HARD_RIGHT    25
 #define SERVO_SLIGHT_RIGHT  20.7
+
+/*
+
+#define SERVO_HARD_LEFT     14.9
+#define SERVO_SLIGHT_LEFT   14.9
+#define SERVO_HARD_RIGHT    20.7
+#define SERVO_SLIGHT_RIGHT  20.7
+
+*/
+
 #define GEAR_RATIO 			12.58			//Gear to Wheel Ratio: Wheel rotates 1x for every 12.58 revolution of the DC motor
 #define PI					3.14159
 #define WHEEL_RADIUS		2.794			//Unit is centimeters
@@ -29,7 +41,7 @@ const float MOTOR_INIT = 18;
 #define SLOW_SPEED          7 //8
 #define MEDIUM_SPEED        10 //8
 
-bool IGNORE_ORIENT=false;
+bool IGNORE_ORIENT = false;
 //bool START_OP=false;
 //bool STOP_OP=false;
 
@@ -59,7 +71,7 @@ uint32_t curr_rps = 0;
 uint32_t req_rps = 0;
 
 //Default values
-static float motor_speed_val = MOTOR_INIT, servo_dir_val = 18, req_servo_dir_val=18;
+static float motor_speed_val = MOTOR_INIT, servo_dir_val = 18, req_servo_dir_val = 18;
 static int reverse_count = 0;
 GPIO rpm_pin(P2_6);
 int16_t tilt_x, tilt_y;
@@ -86,7 +98,8 @@ void count_rpm()
     car.incrRevolutions();
 }
 
-void initializeCAN(){
+void initializeCAN()
+{
     //Configure CAN1
     CAN_init(can1, 100, 100, 100, bus_off, data_ovr);
     CAN_bypass_filter_accept_all_msgs();
@@ -99,36 +112,35 @@ void initializeCAN(){
 }
 void initializeCAR()
 {
-/*
-    //Configure CAN1
-    CAN_init(can1, 100, 100, 100, bus_off, data_ovr);
-    CAN_bypass_filter_accept_all_msgs();
-    CAN_reset_bus(can1);
-*/
+    /*
+     //Configure CAN1
+     CAN_init(can1, 100, 100, 100, bus_off, data_ovr);
+     CAN_bypass_filter_accept_all_msgs();
+     CAN_reset_bus(can1);
+     */
 
     //Initialize motor and servo
     car.setmotorspeed(MOTOR_INIT);
     motor_speed.set(car.getmotorspeed());
     car.setmotordir(18);
     motor_dir.set(car.getmotordir());
-/*
-    //Set GPIO as input and enable interrupt for pin connected to RPM sensor
-    rpm_pin.setAsInput();
-    eint3_enable_port2(6, eint_falling_edge, count_rpm);
-*/
+    /*
+     //Set GPIO as input and enable interrupt for pin connected to RPM sensor
+     rpm_pin.setAsInput();
+     eint3_enable_port2(6, eint_falling_edge, count_rpm);
+     */
 }
 
 bool calculate_speed(int no_of_rev)
 {
     kph = (2 * PI * WHEEL_RADIUS * CONST_KPH * no_of_rev);
     car.setkph(kph);
-    //LD.setNumber(kph);
+    LD.setNumber(kph);
     curr_rps = car.getRevolutions();
 
-
-        sending_speed_kph.MOTOR_Send_Speed = curr_rps;
-        dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
-        send_motor_heartbeat();
+    sending_speed_kph.MOTOR_Send_Speed = kph;
+    dbc_encode_and_send_MOTOR_STATUS(&sending_speed_kph);
+    send_motor_heartbeat();
 
     return true;
 
@@ -204,8 +216,8 @@ float feedback()
     if (req_rps != 0) {
         if (orienttype() == invalid) {
             int diff = req_rps - getcurrrps();
-            if (diff > 5) motor_speed_val += 0.5;
-            else if (diff > 3.5 && diff <= 5) motor_speed_val += 0.3;
+            if (diff > 5) motor_speed_val += 0.3;
+            else if (diff > 3.5 && diff <= 5) motor_speed_val += 0.2;
             else if (diff > 1 && diff <= 3.5) motor_speed_val += 0.01;
             else if (diff < 0 && diff >= -2) motor_speed_val -= 0.01;
             else if (diff < (-2)) motor_speed_val -= 0.05;
@@ -220,11 +232,10 @@ float feedback()
         }
         else if (orient == downhill) {
             int diff = getcurrrps() - req_rps;
-            if (diff > 8) motor_speed_val = 18.3;
-            else if (diff > 4) motor_speed_val = 18.7;
-            //if (diff > 4) motor_speed_val -= 1;
-            else if (diff > 3.5) motor_speed_val -= 0.3;
-            else if (diff > 1) motor_speed_val -= 0.01;
+            if (diff > 8) motor_speed_val = 18.2;
+            else if (diff > 4) motor_speed_val = 18.3;
+            else if (diff > 3.5) motor_speed_val -= 0.4;
+            else if (diff > 1) motor_speed_val -= 0.1;
             else if (diff < 0) motor_speed_val += 0.005;
         }
         motor_speed.set(motor_speed_val);
@@ -244,13 +255,12 @@ void maintainspeed()
 
 void calc_orientation()
 {
-    if(reverse_flag) reverse_init();
-
+    if (reverse_flag) reverse_init();
 
     tilt_x = AS.getX();
-    tilt_y=AS.getY();
+    tilt_y = AS.getY();
 
-    if(tilt_x>46) {  //&& tilt_x>tilt_y  //old value - x>76
+    if (tilt_x > 46) {  //&& tilt_x>tilt_y  //old value - x>76
         //uphill
         LE.off(1);
         LE.off(2);
@@ -272,20 +282,23 @@ void calc_orientation()
         LE.toggle(2);
     }
 
-    if(IGNORE_ORIENT)
-        orient=invalid;
+    if (IGNORE_ORIENT) orient = invalid;
     //return value for unit testing
 
-/*    if(SW.getSwitch(1))
-        START_OP=true;
-    else if(SW.getSwitch(2))
-        START_OP=false;*/
+    /*    if(SW.getSwitch(1))
+     START_OP=true;
+     else if(SW.getSwitch(2))
+     START_OP=false;*/
 }
 
 bool checkmia()
 {
     if (dbc_handle_mia_MASTER_SPEED(&speed, 250)) {
-        LD.setNumber(99);
+        //LD.setNumber(99);
+      /*  motor_speed.set(MOTOR_INIT);
+        req_rps = 0;
+        reverse_flag = false;
+        brake_flag = true;*/
         return true;
     }
     return false;
@@ -307,16 +320,17 @@ int mdirection(uint8_t*b)
     return d;
 }
 
-bool receive_decode_MID(uint8_t*a, uint8_t*b){
+bool receive_decode_MID(uint8_t*a, uint8_t*b)
+{
     while ((CAN_rx(can1, &motor_message, 0)) && (!reverse_flag)) {
         can_msg_hdr.dlc = motor_message.frame_fields.data_len;
         can_msg_hdr.mid = motor_message.msg_id;
 
-        if(can_msg_hdr.mid == 80);
-            //START_OP = true;
-        else if(can_msg_hdr.mid == 81);
-            //START_OP=false;
-        else if(can_msg_hdr.mid == 203){
+        if (can_msg_hdr.mid == 80) ;
+        //START_OP = true;
+        else if (can_msg_hdr.mid == 81) ;
+        //START_OP=false;
+        else if (can_msg_hdr.mid == 203) {
             dbc_decode_MASTER_SPEED(&speed, motor_message.data.bytes, &can_msg_hdr);
             *a = speed.MASTER_Maintain_Speed;
             *b = speed.MASTER_Maintain_Direction;
@@ -326,7 +340,6 @@ bool receive_decode_MID(uint8_t*a, uint8_t*b){
     }
     return false;
 }
-
 
 bool recieveanddecode(uint8_t*a, uint8_t*b)
 {
@@ -348,30 +361,36 @@ bool recieveanddecode(uint8_t*a, uint8_t*b)
     //enum for msg ID
 }
 
-void feedback_servo(){
+void feedback_servo()
+{
 
-    int diff_servo= req_servo_dir_val-servo_dir_val;
+    int diff_servo = req_servo_dir_val - servo_dir_val;
 
-    if(diff_servo!=0){
+    if (diff_servo != 0) {
 
-        if(diff_servo<-8||diff_servo>8){
-            servo_dir_val=SERVO_CENTER;
-        }else if(diff_servo>-8 && diff_servo<-4){
-            servo_dir_val-=0.02;
-        }else if(diff_servo>-4 && diff_servo<0){
-            servo_dir_val-=0.01;
-        }else if(diff_servo>0 && diff_servo<4){
-            servo_dir_val+=0.01;
-        }else if(diff_servo>4 && diff_servo<8){
-            servo_dir_val+=0.02;
+        if (diff_servo < -8 || diff_servo > 8) {
+            servo_dir_val = SERVO_CENTER;
+        }
+        else if (diff_servo > -8 && diff_servo < -4) {
+            servo_dir_val -= 0.02;
+        }
+        else if (diff_servo > -4 && diff_servo < 0) {
+            servo_dir_val -= 0.01;
+        }
+        else if (diff_servo > 0 && diff_servo < 4) {
+            servo_dir_val += 0.01;
+        }
+        else if (diff_servo > 4 && diff_servo < 8) {
+            servo_dir_val += 0.02;
         }
 
     }
 
-    if(servo_dir_val>=25){
-        servo_dir_val=25;
-    }else if(servo_dir_val<=10.9){
-        servo_dir_val=10.9;
+    if (servo_dir_val >= 25) {
+        servo_dir_val = 25;
+    }
+    else if (servo_dir_val <= 10.9) {
+        servo_dir_val = 10.9;
     }
     motor_dir.set(servo_dir_val);
 
@@ -403,7 +422,7 @@ int getrps(uint8_t speed_curr)
                 //if (reverse_flag)
                 //motor_speed.set(MOTOR_INIT);
                 //motor_speed_val=MOTOR_INIT;
-                req_rps = 6;
+                req_rps = 4;
                 reverse_flag = false;
                 break;
             case 3:
@@ -411,7 +430,7 @@ int getrps(uint8_t speed_curr)
                 //if (reverse_flag)
                 //motor_speed.set(MOTOR_INIT);
                 //motor_speed_val=MOTOR_INIT;
-                req_rps = 6;        //good for flat and uphill 12;
+                req_rps = 5;        //good for flat and uphill 12;
                 reverse_flag = false;
                 break;
             case 4:
@@ -468,16 +487,16 @@ bool getcanmsg()
     uint8_t speed_curr = 0;
     uint8_t dir_curr = 0;
 
-/*    if(receive_decode_MID(&a, &b)){
+    /*    if(receive_decode_MID(&a, &b)){
 
-        if(START_OP){
-        speed_curr = mspeed(&a);
-        dir_curr = mdirection(&b);
+     if(START_OP){
+     speed_curr = mspeed(&a);
+     dir_curr = mdirection(&b);
 
-        req_rps = getrps(speed_curr);
-        servo_dir_val = getdir(dir_curr);
-        }
-    }*/
+     req_rps = getrps(speed_curr);
+     servo_dir_val = getdir(dir_curr);
+     }
+     }*/
 
     if (recieveanddecode(&a, &b)) {
         speed_curr = mspeed(&a);
