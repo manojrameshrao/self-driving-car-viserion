@@ -440,10 +440,10 @@ void display_Task::displayScrn1(void)
 	drawFastHLine(5,100,231,ILI9340_WHITE);
 	drawFastHLine(5,150,231,ILI9340_WHITE);
 	drawFastHLine(5,200,231,ILI9340_WHITE);
-	drawString("Speed",12,20,2,ILI9340_YELLOW);
-	drawString("Heading Angle",12,70,2,ILI9340_YELLOW);
-	drawString("Bearing Angle",12,120,2,ILI9340_YELLOW);
-	drawString("Battery",12,170,2,ILI9340_YELLOW);
+	drawString("Speed",14,20,2,ILI9340_YELLOW);
+	drawString("Heading",14,70,2,ILI9340_YELLOW);
+	drawString("Bearing",14,120,2,ILI9340_YELLOW);
+	drawString("Req Heading",14,170,2,ILI9340_YELLOW);
 
 	// Is there any change in BPS?
 	if(xSemaphoreTake(SPEED_REFRESH,50))

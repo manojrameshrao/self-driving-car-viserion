@@ -44,7 +44,6 @@ static char count[]="COUNT";
 
 void bluetoothreceiveinit(Uart3& u3)
 {
-
 u3.init(9600);
 errpin.setAsOutput();
 }
@@ -64,7 +63,7 @@ bool recieve_cmd_from_bluetooth(Uart3& u3)
 
 		if(app_count == points_count)
 		{
-				printf("Count = %d They match ",points_count);
+				//printf("Count = %d They match ",points_count);
 				check_num.BT_NO_OF_COR=points_count;
 				dbc_encode_and_send_SEND_NO_OF_CHECKPOINTS(&check_num);
 				count_check=0;
@@ -134,6 +133,7 @@ bool recieve_cmd_from_bluetooth(Uart3& u3)
 		else if(strcmp(temp,start) == 0)
 		{
 			//send can msg to master to start car
+			sendCarStop();
 			sendCarStart();
 
 		}
