@@ -1,42 +1,36 @@
-package com.example.pratap.viserion;
+package com.cmpe.pratap.viserion;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -44,24 +38,27 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
-import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMarkerClickListener,
-        GoogleMap.OnMarkerDragListener, GoogleApiClient.ConnectionCallbacks{
+        GoogleMap.OnMarkerDragListener, GoogleApiClient.ConnectionCallbacks {
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     public static final int My_BLUETOOTH_REQUEST_ACCESS = 98;
     public static final String REQUEST_STATS = "STATS";
     public static final String REQUEST_CAR_LOCATION = "POINT";
     public static final String REQUEST_CAR_To_START = "START";
     public static final String REQUEST_CAR_To_STOP = "CSTOP";
+    public static final String END_OF_COORDINATES= "CENDS";
+    public static final String SIZE_OF_COORDINATES= "CSIZE";
     private String DEVICE_ADDRESS = "98:D3:32:20:FE:1C";
+    private String DEVICE_ADDRESS_1="20:16:11:29:87:57";
     private GoogleMap mMap;
-
+   private TextToSpeech texttospeech;
     Mybluetoothconnector mybluetoothconnector = Mybluetoothconnector.getInstance();
     private GoogleApiClient mGoogleApiClient;
     private  Location mLastLocation;
@@ -75,23 +72,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private Thread receiveLocationThread;
     private Thread connectionThread;
+    private Thread disconnectionThread;
     byte[] readBuffer;
     private int readBufferPosition;
     private List<Double> directionPointsTobeSentonBluetooth = new ArrayList<Double>();
-    private List<Double> testgpspoints = new ArrayList<>();
     private TextView datatextView;
     private  boolean stopReceiving,stopConnecting;
     private  SwitchCompat my_connection_switch;
     private Button sendcoordinate;
-    //tesst tt;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         end_latitude = 0;
         end_longitude = 0;
+        latitude=0;
+        longitude=-0;
         bluetoothDeviceFound = false;
         countt = 1;
+        texttospeech= new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    texttospeech.setLanguage(Locale.US);
+                }
+            }
+        });
+
         my_connection_switch=(SwitchCompat) findViewById(R.id.connect_switch);
         datatextView = (TextView) findViewById(R.id.dataidstr);
         sendcoordinate=(Button) findViewById(R.id.Send_data);
@@ -106,7 +113,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d("onCreate", "Google Play Services available.");
         }
 
-//bluetooth comes here
         if (mBluetoothAdapter == null) {
 
             Toast.makeText(getApplicationContext(), "This Device does'nt Support Bluetooth", Toast.LENGTH_SHORT).show();
@@ -115,7 +121,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (!mBluetoothAdapter.isEnabled()) {
             Intent BluetootIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(BluetootIntent, My_BLUETOOTH_REQUEST_ACCESS);
-            //getPairedBluetoothDevices();
         }
         try {
 
@@ -124,7 +129,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     mBluetoothAdapter.startDiscovery();
                 }
 
-                 } else {
+            } else {
                 Toast.makeText(getApplicationContext(), "Please pair a Bluetooth Device to send", Toast.LENGTH_SHORT).show();
             }
         } catch (RuntimeException e) {
@@ -132,34 +137,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
     }
-                public void initial_car_point(){
-                    directionPointsTobeSentonBluetooth.clear();
-                    mMap.clear();
-                    end_latitude = 0;
-                    end_longitude = 0;
-                    checking=false;
-                    sendcoordinate.setClickable(false);
-                    if (latitude != 0 && longitude != 0) {
-                        LatLng latLng = new LatLng(latitude, longitude);
-                        MarkerOptions markerOptions = new MarkerOptions();
-                        markerOptions.position(latLng);
-                        markerOptions.draggable(true);
-                        markerOptions.title("Drag Where You Want to be");
-                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-                        mCurrLocationMarker = mMap.addMarker(markerOptions);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                        mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-                    }
-                }
+    public void initial_car_point(){
+        directionPointsTobeSentonBluetooth.clear();
+        mMap.clear();
+        end_latitude = 0;
+        end_longitude = 0;
+        checking=false;
+        sendcoordinate.setClickable(false);
+        if (latitude != 0 && longitude != 0) {
+            LatLng latLng = new LatLng(latitude, longitude);
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.draggable(true);
+            markerOptions.title("Drag Where You Want to be");
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+            mCurrLocationMarker = mMap.addMarker(markerOptions);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+        }
+    }
     public void change_destination (View view) {
 
         if (latitude != 0 && longitude != 0) {
             initial_car_point();
+            sendcoordinate.setClickable(false);
             Toast.makeText(MapsActivity.this, "Car Location", Toast.LENGTH_LONG).show();
         }
         else {
@@ -170,15 +177,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void send_coordinates (View view){
         try {
-
-            if (mybluetoothconnector.getBluetoothdevice() != null) {
+            sendcoordinate.setClickable(false);
                 if (checking) {
                     String message = "";
                     int count = 1;
                     for (Double lg : directionPointsTobeSentonBluetooth) {
                         if (count % 2 != 0) {
+                            //  String lattem = Double.toString(lg);
                             message = message + lg;
                         } else {
+                            //String longtem = Double.toString(lg);
                             message = message + "," + lg;
                             byte[] send = message.getBytes();
                             mybluetoothconnector.getOutputStream().write(send);
@@ -197,16 +205,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                         count++;
                     }
-                    Toast.makeText(getApplicationContext(), "sending...", Toast.LENGTH_SHORT).show();
+
+
                 }
-            } else {
-                Toast.makeText(getApplicationContext(), "Please pair for a Bluetooth Device to transmit", Toast.LENGTH_SHORT).show();
-            }
+                mybluetoothconnector.getOutputStream().flush();
+                Toast.makeText(getApplicationContext(), "Transmission completed", Toast.LENGTH_SHORT).show();
+                Thread.sleep(1000);
+                sendReceiveMsgRequest(END_OF_COORDINATES);
+                Thread.sleep(1000);
+                String msize = "";
+                int lensize=directionPointsTobeSentonBluetooth.size()/2;
+                msize=""+lensize;
+                String voice="All SET TO Drive";
+                Toast.makeText(getApplicationContext(), "Ready To Drive", Toast.LENGTH_SHORT).show();
+                texttospeech.speak(voice, TextToSpeech.QUEUE_FLUSH, null);
+                sendReceiveMsgRequest(msize);
+
+            } 
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (RuntimeException e) {
             e.printStackTrace();
+            // Toast.makeText(getApplicationContext(), "RuntimeException to transmit Data", Toast.LENGTH_SHORT).show();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+
     }
     public void statinfo(View view) {
         sendReceiveMsgRequest(REQUEST_STATS);
@@ -221,6 +246,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
     public void stopcar(View view) {
         sendReceiveMsgRequest(REQUEST_CAR_To_STOP);
+        sendcoordinate.setClickable(true);
     }
 
     public void startcar(View view) {
@@ -252,17 +278,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             e.printStackTrace();
         }
     }
-
     private String getRouteDirectionsUrl() {
         StringBuilder googleRouteDirectionsUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
         googleRouteDirectionsUrl.append("origin=" + latitude + "," + longitude);
         googleRouteDirectionsUrl.append("&destination=" + end_latitude + "," + end_longitude);
         googleRouteDirectionsUrl.append("&mode=walking");
-        googleRouteDirectionsUrl.append("&key=" + "AIzaSyDxKBS6PNcFk_4NrDkU0Re0agYysB*****");
+        googleRouteDirectionsUrl.append("&key=" + "AIzaSyDxKBS6PNcFk_4NrDkU0Re0agYysBp1wgU");
 
         return googleRouteDirectionsUrl.toString();
     }
-
 
     /**
      * Manipulates the map once available.
@@ -299,11 +323,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addApi(LocationServices.API)
                 .build();
         mGoogleApiClient.connect();
-           }
-		   
+    }
+
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(mReceiver, filter);
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(100);
@@ -314,21 +340,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 == PackageManager.PERMISSION_GRANTED) {
             //LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, (com.google.android.gms.location.LocationListener) this);
         }
+        stopConnecting = false;
         connectToCarBluetooth();
     }
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice bt = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                mybluetoothconnector.setBluetoothdevice(bt);
+                String deviceName = mybluetoothconnector.getBluetoothdevice().getName();
+                String deviceHardwareAddress = mybluetoothconnector.getBluetoothdevice().getAddress();
+            }
+            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+
+                try {
+
+                    my_connection_switch.toggle();
+                    bluetoothDeviceFound=false;
+                    mybluetoothconnector.getBluetoothSocket().close();
+                    mybluetoothconnector.setBluetoothdevice(null);
+                    stopConnecting = false;
+                    connectToCarBluetooth();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }
+    };
 
     @Override
     public void onConnectionSuspended(int i) {
+        Toast.makeText(this, "onconnectsuspend", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Toast.makeText(this, "onconnectfail", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-       return false;
+        return false;
     }
 
     @Override
@@ -363,7 +418,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     directionPointsTobeSentonBluetooth.clear();
 
                     int count = 1;
-                    for (LatLng lg : allGeoPointsresults) {
+                    for(int i=1; i<allGeoPointsresults.size();i++){
+                        LatLng lg=allGeoPointsresults.get(i);
                         String lattem = Double.toString(lg.latitude);
                         if (lattem.length() >= 9) {
                             lattem = lattem.substring(0, 9);
@@ -433,7 +489,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
-    ActivityCompat.requestPermissions(this,
+                ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION);
 
@@ -495,12 +551,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
             }
             case My_BLUETOOTH_REQUEST_ACCESS: {
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted. Do the
-                    // contacts-related task you need to do.
                     if (ContextCompat.checkSelfPermission(this,
                             Manifest.permission.BLUETOOTH)
                             == PackageManager.PERMISSION_GRANTED) {
@@ -524,27 +577,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice bt = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                mybluetoothconnector.setBluetoothdevice(bt);
-                String deviceName = mybluetoothconnector.getBluetoothdevice().getName();
-                String deviceHardwareAddress = mybluetoothconnector.getBluetoothdevice().getAddress();
-            }
-            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                my_connection_switch.toggle();
-
-            }
-        }
-    };
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mReceiver);
+
         try {
+            unregisterReceiver(mReceiver);
             if(mybluetoothconnector.getBluetoothdevice()!=null) {
                 if (mybluetoothconnector.getBluetoothSocket().isConnected()) {
                     mybluetoothconnector.getBluetoothSocket().close();
@@ -560,7 +599,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     void getPairedBluetoothDevices() {
         try {
             Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
-            mybluetoothconnector.setBluetoothdevice(mBluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS));
+            // mybluetoothconnector.setBluetoothdevice(mBluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS));
+            mybluetoothconnector.setBluetoothdevice(mBluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS_1));
+
             if (bondedDevices.contains(mybluetoothconnector.getBluetoothdevice())) {
                 bluetoothDeviceFound = true;
             }
@@ -572,51 +613,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
     public void receiveCarLocation() {
         final Handler handler = new Handler();
-        final byte delimiter = 10;
-       stopReceiving = false;
+        final byte delimiter = 10; //This is the ASCII code for a newline character
+        stopReceiving = false;
         readBufferPosition = 0;
         readBuffer = new byte[1024];
         receiveLocationThread = new Thread(new Runnable() {
             public void run() {
                 while (!Thread.currentThread().isInterrupted() && !stopReceiving) {
-                        try {
-                            if (mybluetoothconnector.getInputStream() != null) {
-                                int bytesAvailable = mybluetoothconnector.getInputStream().available();
-                                if (bytesAvailable > 0) {
-                                    byte[] packetBytes = new byte[bytesAvailable];
-                                    mybluetoothconnector.getInputStream().read(packetBytes);
-                                    for (int i = 0; i < bytesAvailable; i++) {
-                                        byte b = packetBytes[i];
-                                        if (b == delimiter) {
-                                            byte[] encodedBytes = new byte[readBufferPosition];
-                                            System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
-                                            final String data = new String(encodedBytes, "US-ASCII");
-                                            readBufferPosition = 0;
-                                            handler.post(new Runnable() {
-                                                public void run() {
-
-                                                    if((data.contains("L")) && (data.contains(","))){
-                                                        String co_orrd_temp=data.substring(1);
-                                                        String co_orrd[]=co_orrd_temp.split(",");
-                                                        latitude= Double.parseDouble(co_orrd[0]);
-                                                        longitude=Double.parseDouble(co_orrd[1]);
-                                                        initial_car_point();
-                                                        datatextView.setText(co_orrd_temp);
-                                                        stopReceiving = true;
-                                                    }
+                    try {
+                        if (mybluetoothconnector.getInputStream() != null) {
+                            int bytesAvailable = mybluetoothconnector.getInputStream().available();
+                            if (bytesAvailable > 0) {
+                                byte[] packetBytes = new byte[bytesAvailable];
+                                mybluetoothconnector.getInputStream().read(packetBytes);
+                                for (int i = 0; i < bytesAvailable; i++) {
+                                    byte b = packetBytes[i];
+                                    if (b == delimiter) {
+                                        byte[] encodedBytes = new byte[readBufferPosition];
+                                        System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
+                                        final String data = new String(encodedBytes, "US-ASCII");
+                                        readBufferPosition = 0;
+                                        handler.post(new Runnable() {
+                                            public void run() {
 
 
+
+                                                if((data.contains("L")) && (data.contains(","))){
+                                                    String co_orrd_temp=data.substring(1);
+                                                    String co_orrd[]=co_orrd_temp.split(",");
+                                                    latitude= Double.parseDouble(co_orrd[0]);
+                                                    longitude=Double.parseDouble(co_orrd[1]);
+                                                    initial_car_point();
+                                                    datatextView.setText(co_orrd_temp);
+                                                    stopReceiving = true;
                                                 }
-                                            });
-                                        } else {
-                                            readBuffer[readBufferPosition++] = b;
-                                        }
+                                                if(!(data.contains("L"))){
+                                                    datatextView.setText("Please wait for GPS Lock");
+                                                }
+
+                                            }
+                                        });
+                                    } else {
+                                        readBuffer[readBufferPosition++] = b;
                                     }
                                 }
                             }
-                            } catch(IOException ex){
-                            stopReceiving = true;
-                            }
+                        }
+                    } catch(IOException ex){
+                    }
 
 
                 }
@@ -624,8 +668,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
         receiveLocationThread.start();
-    }
 
+    }
 
     public void connectToCarBluetooth() {
         stopConnecting = false;
@@ -636,35 +680,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (!bluetoothDeviceFound) {
                         getPairedBluetoothDevices();
                     }
-                            if (mybluetoothconnector.getBluetoothdevice() != null) {
-                                try {
-                                    mybluetoothconnector.setBluetoothSocket(mybluetoothconnector.getBluetoothdevice().createRfcommSocketToServiceRecord(mybluetoothconnector.getBluetoothdevice().getUuids()[0].getUuid()));
-                                    mybluetoothconnector.getBluetoothSocket().connect();
-                                    mybluetoothconnector.setOutputStream(mybluetoothconnector.getBluetoothSocket().getOutputStream());
-                                    mybluetoothconnector.setInputStream(mybluetoothconnector.getBluetoothSocket().getInputStream());
-                                    stopConnecting = true;
+                    if (mybluetoothconnector.getBluetoothdevice() != null) {
+                        try {
+                            mybluetoothconnector.setBluetoothSocket(mybluetoothconnector.getBluetoothdevice().createRfcommSocketToServiceRecord(mybluetoothconnector.getBluetoothdevice().getUuids()[0].getUuid()));
+                            mybluetoothconnector.getBluetoothSocket().connect();
+                            mybluetoothconnector.setOutputStream(mybluetoothconnector.getBluetoothSocket().getOutputStream());
+                            mybluetoothconnector.setInputStream(mybluetoothconnector.getBluetoothSocket().getInputStream());
+                            stopConnecting = true;
 
-                                    handler1.post(new Runnable() {
-                                        public void run() {
-                                            try{
-                                                my_connection_switch.toggle();
-                                              }catch(NumberFormatException e){
-                                            }
-                                        }
-                                    });
+                            handler1.post(new Runnable() {
+                                public void run() {
+                                    try{
+                                        my_connection_switch.toggle();
+                                    }catch(NumberFormatException e){
+                                    }
 
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+
                                 }
-                                catch(Exception e){
-                                    e.printStackTrace();
-                                }
-                            }
+                            });
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         });
 
         connectionThread.start();
     }
+
+
+
 
 }

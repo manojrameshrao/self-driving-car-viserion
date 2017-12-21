@@ -1,4 +1,4 @@
-package com.example.pratap.viserion;
+package com.cmpe.pratap.viserion;
 
 import org.json.JSONArray;
 import org.json.JSONException;

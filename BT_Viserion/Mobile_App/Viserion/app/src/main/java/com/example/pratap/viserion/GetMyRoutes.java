@@ -1,15 +1,10 @@
-package com.example.pratap.viserion;
+package com.cmpe.pratap.viserion;
 
-import android.app.Activity;
 import android.graphics.Color;
 import android.os.AsyncTask;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
@@ -34,7 +29,7 @@ public  class GetMyRoutes extends AsyncTask<Object,String,String>{
         this.delegatetry = delegate;
     }
 
-    public static final double mapAddContPoints = 0.00005;
+    public static final double mapAddContPoints = 0.00008;
 
     GoogleMap mMap;
     String url;
@@ -69,6 +64,7 @@ public  class GetMyRoutes extends AsyncTask<Object,String,String>{
         routeList = parser.parsingDirections(gDirectionData);
         displayDirection(routeList);
 
+
     }
 
     public void displayDirection(String[] directionsList) {
@@ -83,8 +79,6 @@ public  class GetMyRoutes extends AsyncTask<Object,String,String>{
             polylinelist.add(polyline);
         }
         int i = 0;
-        for (LatLng a : allGeoPoints) {
-        }
         allGeoPointsfinal.addAll(allGeoPoints);
         for (int j = 0; j < allGeoPointsfinal.size() - 1; j++) {
             LatLng temp1 = allGeoPointsfinal.get(j);
@@ -116,10 +110,9 @@ public  class GetMyRoutes extends AsyncTask<Object,String,String>{
         }
         allGeoPointsresults.clear();
         allGeoPointsresults.addAll(allGeoPointsfinal);
-        delegatetry.processFinishTry(allGeoPointsfinal);
+         delegatetry.processFinishTry(allGeoPointsfinal);
         allGeoPointsfinal.removeAll(allGeoPoints);
-        for (LatLng a : allGeoPointsfinal) {
-        }
+    
     }
 
     public void AllGeoPoints(Iterable<LatLng> var1) {

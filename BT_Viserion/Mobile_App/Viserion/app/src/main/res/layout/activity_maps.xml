@@ -27,14 +27,6 @@
             android:text="Receive Car Location" />
 
     </LinearLayout>
-  <!--  <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/linearLayout"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="93dp">
--->
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
@@ -42,17 +34,13 @@
     android:id="@+id/map"
     android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
-    android:layout_height="340dp"
-    tools:context="com.example.pratap.viserion.MapsActivity"
+    android:layout_height="match_parent"
+    tools:context="com.cmpe.pratap.viserion.MapsActivity"
         android:layout_above="@+id/Change_dst"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/start_car" />
 
-<!--
-
-    </LinearLayout>
--->
 
     <Button
         android:id="@+id/Change_dst"
@@ -82,13 +70,15 @@
         android:id="@+id/dataidstr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
         android:layout_alignParentStart="true"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="18sp"
+        android:layout_toStartOf="@+id/stop_car"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_below="@+id/linearLayout"
-        android:hint="Data"
-        android:textSize="18sp" />
+        android:layout_toLeftOf="@+id/stop_car" />
 
     <Button
         android:id="@+id/start_car"
@@ -117,6 +107,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="BT"
+        android:clickable="false"
         android:theme="@style/connectionswitch"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
